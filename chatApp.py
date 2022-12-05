@@ -3,28 +3,33 @@ from tkinter import messagebox
 import threading
 import socket
 import pickle
+import time
+
 FORMAT = 'utf-8'
 
 # =================
 root = None
+root2 = None
 client = None
-server = None
-port = None
+server = "172.26.80.1"
+port = 2222
 # ==================
 friends = []
 current_connections = []
 account_id = 1
 account_info = {
-        "id": account_id,
-        "username": "",
-        "age": 999}
+    "id": account_id,
+    "username": "",
+    "age": 999,
+    "location":"",
+    "password":""}
 
 
 
 def show_active_users_window(active_users):
     """Displays
     """
-    top = Toplevel(root)
+    top = Toplevel(root2)
     top.title("Active Users")
     top.grab_set()
     scrollbar = Scrollbar(top, orient=VERTICAL)
@@ -45,32 +50,52 @@ def show_active_users_window(active_users):
     # aBut.pack(side=LEFT)
     # buttons.pack(side=BOTTOM)
 
-    for user in active_users:
-        listbox.insert(END, user['username'])
+    for username in active_users:
+        listbox.insert(END, username)
     listbox.pack(side=LEFT, fill=BOTH, expand=1)
 
 
 def show_active_user():
-    client.send("-show_active_user-".encode())
+    client.send("-send_username_list-".encode())
     dump_active_users = client.recv(4096)  # receive at most 4096 bytes
     active_users = pickle.loads(dump_active_users)
     show_active_users_window(active_users)
 
 
-def connect_to_server(name, age, top):
-    global account_info
-    account_info['username'] = name
-    account_info['age'] = age
-    global server
-    server = "192.168.1.8"
-    global port
-    port = 2222
+def connect_to_server(name, age, location, password, confirm_password, top):
+    if (not age.isnumeric()):
+        messagebox.showerror("Age", "Age must be a number !!!")
+        return
+    if (password != confirm_password):
+        messagebox.showerror("Password", "Password not match !!!")
+        return
     global client
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((server, port))
+    client.send('-send_username_list-'.encode())
+    username_list_info = client.recv(4096)
+    username_list = pickle.loads(username_list_info)
+    print(username_list)
+    for username in username_list:
+        if name == username:
+            messagebox.showerror("Sign Up", "Username existed")
+            return
+    # client.close()
+    # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # client.connect((server, port))
+    global account_info
+    account_info['username'] = name
+    account_info['age'] = age
+    account_info['location'] = location
+    account_info['password'] = password
     dump_client_info = pickle.dumps(account_info)
+    client.send('-sign_up-'.encode())
+    time.sleep(0.1)
     client.send(dump_client_info)
+    messagebox.showinfo("Sign Up", "Sign Up Successfully")
     top.destroy()
+    root.destroy()
+    main_chat_box()
 
 
 def connect_to_server_window():
@@ -85,12 +110,72 @@ def connect_to_server_window():
     age = Entry(top)
     age.focus_set()
     age.grid(row=1, column=1)
-    btn = Button(top, text="Start chat", command=lambda: connect_to_server(name.get(), age.get(), top))
+    Label(top, text="Location:").grid(row=2)
+    location = Entry(top)
+    location.focus_set()
+    location.grid(row=2, column=1)
+    Label(top, text="Password:").grid(row=3)
+    password = Entry(top)
+    password.focus_set()
+    password.grid(row=3, column=1)
+    Label(top, text="Confirm Password:").grid(row=4)
+    confirm_password = Entry(top)
+    confirm_password.focus_set()
+    confirm_password.grid(row=4, column=1)
+
+    def go(*args):
+        connect_to_server(name.get(), age.get(),
+                          location.get(), password.get(),
+                          confirm_password.get(), top)
+
+    btn = Button(top, text="Start chat", command=go)
+    top.bind('<Return>', go)
+    btn.grid(row=5, column=1)
+
+def login(usename, password, top):
+    login_info = dict()
+    login_info['username'] = usename
+    login_info['password'] = password
+    global client
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((server, port))
+    dump_login_info = pickle.dumps(login_info)
+    client.send('-login-'.encode())
+    time.sleep(0.1)
+    client.send(dump_login_info)
+    success = client.recv(20)
+    success = success.decode()
+    if success == 'success':
+        messagebox.showinfo("Login", "Login Successfully")
+    else:
+        messagebox.showerror("Login", "Username or Password not match")
+    top.destroy()
+    root.destroy()
+    main_chat_box()
+
+
+def login_window():
+    top = Toplevel(root)
+    top.title("Login")
+    top.grab_set()  # prevent users from interacting with the main window
+    Label(top, text="Username:").grid(row=0)
+    username = Entry(top)
+    username.focus_set()
+    username.grid(row=0, column=1)
+    Label(top, text="Password:").grid(row=1)
+    password = Entry(top)
+    password.focus_set()
+    password.grid(row=1, column=1)
+    def go(*args):
+        login(username.get(), password.get(), top)
+
+    btn = Button(top, text="Login", command=go)
+    top.bind('<Return>', go)
     btn.grid(row=2, column=1)
-    pass
 
 def save_history():
     pass
+
 
 def change_info(name, age, top):
     account_info['username'] = name
@@ -99,7 +184,6 @@ def change_info(name, age, top):
     client.send(dump_client_info)
     messagebox.showinfo("Update information.", "Information updated")
     top.destroy()
-
 
 
 def change_info_window():
@@ -121,19 +205,13 @@ def change_info_window():
 def join_server():
     pass
 
-def main():
-    # ==== init tk window =======
-    global root
-    root = Tk()
-    root.title("Chat APP v1")
-    # =====================================
+def main_chat_box():
+    global root2
+    root2 = Tk()
+    root2.title("Chat APP v1")
+    root2.geometry("720x360")
 
-    # ==== show the join button at bottom ===========
-    root.geometry("360x720")
-    connect_button = Button(root, text='Join Server', command=join_server)
-    connect_button.pack(side=BOTTOM)
-
-    menu_bar = Menu(root, tearoff=0)
+    menu_bar = Menu(root2, tearoff=0)
 
     tool_menu = Menu(menu_bar, tearoff=0)
     tool_menu.add_command(label="Save chat", command=save_history)
@@ -147,13 +225,26 @@ def main():
     show_menu.add_command(label="Show active users", command=show_active_user)
     menu_bar.add_cascade(label="Show", menu=show_menu)
 
-    root.config(menu=menu_bar)
+    root2.config(menu=menu_bar)
+    root2.mainloop()
+
+
+
+def main():
+    # ==== init tk window =======
+    global root
+    root = Tk()
+    root.title("Chat APP v1")
+    # =====================================
+
+    # ==== show the join button at bottom ===========
+    root.geometry("360x620")
 
 
     connect_button = Button(root, text='Register', command=connect_to_server_window)
-    connect_button.pack()
-
-
+    connect_button.grid(column=2, row=4)
+    connect_button = Button(root, text='Login', command=login_window)
+    connect_button.grid(column=2, row=5)
 
     # connection_menu = Menu(menu_bar, tearoff=0)
     # connection_menu.add_command(label="Quick Connect", command=QuickClient)
@@ -205,6 +296,7 @@ def main():
     #
     # load_contacts()
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

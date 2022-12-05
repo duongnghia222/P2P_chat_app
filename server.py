@@ -15,27 +15,50 @@ def start_server():
     print("Sever is listening on", host)
     server.listen()
 
-def send_active_user(client):
-    dump_active_users = pickle.dumps(active_users)
-    client.send(dump_active_users)
 
 
+def tcp(client, address):
+    while True:
+        # print("receiving command")
+        command = client.recv(50)
+        command = command.decode()
+        if command == "-sign_up-":
+            # receive client info
+            dump_client_info = client.recv(4096)  # receive at most 4096 bytes
+            client_info = pickle.loads(dump_client_info)
+
+            print("1st time connected with", address)
+
+            active_users.append(client_info)
+            print(client_info)
+        elif command == '-login-':
+            dump_login_info = client.recv(1024)  # receive at most 4096 bytes
+            login_info = pickle.loads(dump_login_info)
+            print(active_users)
+            for user in active_users:
+                if login_info['username'] == user['username']:
+                    if login_info['password'] == user['password']:
+                        print("login successfully!!!")
+                        client.send('success'.encode())
+                        print("connected with", login_info['username'])
+            client.send('fail'.encode())
+        elif command == '-send_username_list-':
+            user_name_list = []
+            for user in active_users:
+                user_name_list.append(user['username'])
+            username_list_info = pickle.dumps(user_name_list)
+            client.send(username_list_info)
 
 def receive_connection():
     try:
         while True:
             client, address = server.accept()
-            # receive client info
-            dump_client_info = client.recv(4096)  # receive at most 4096 bytes
-            print("Connected with", address)
-            client_info = pickle.loads(dump_client_info)
-            active_users.append(client_info)
+            t = threading.Thread(target=tcp, args=(client, address))
+            t.start()
+
+
+
             # ==========================================
-            # receive client request
-            request = client.recv(1024).decode()
-            print(request)
-            if request == "-show_active_user-":
-                send_active_user(client)
 
 
 
@@ -49,7 +72,8 @@ def receive_connection():
             # thread = threading.Thread(target=handle, args=(client,))
             # thread.start()
     except receive_connection.error:
-        print("start_server error !!!")
+        print(' Connection lose')
+
 
 if __name__ == "__main__":
     start_server()
