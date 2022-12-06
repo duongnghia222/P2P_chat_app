@@ -12,15 +12,24 @@
 # print(mess[mess.index('_to_')+4:-1])
 
 
-from_user = 'nhaan'
-from_user_address = '18101996'
-from_user_port = '1802'
-response = ('-accept_request_from_{}_ip={}_port={}-'.format(from_user,
-                                                from_user_address, from_user_port))
-print(response[:21])
-print(response[21:response.index('_ip=')])
-print(response[response.index('_ip=')+4:response.index('_port=')])
-print(response[response.index('_port=')+6:-1])
+# from_user = 'nhaan'
+# from_user_address = '18101996'
+# from_user_port = '1802'
+# response = ('-accept_request_from_{}_ip={}_port={}-'.format(from_user,
+#                                                 from_user_address, from_user_port))
+# print(response[:21])
+# print(response[21:response.index('_ip=')])
+# print(response[response.index('_ip=')+4:response.index('_port=')])
+# print(response[response.index('_port=')+6:-1])
+
+import threading
+str = None
+lock = threading.Lock()
+str = input("text")
+
+while str:
+
+
 
 # import threading
 #

@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+import tkinter.font as tkFont
 import threading
 import socket
 import pickle
@@ -19,7 +20,6 @@ server_server = "172.26.80.1"  # ip of the server of the app to receive response
 port_server = 2223
 # port_for_response = 2223
 # ==================
-friends = []
 friend_requests = []
 block_list = []
 account_info = dict()
@@ -39,7 +39,7 @@ def listen(client_listen, address_listen):
             from_user = response[21:response.index('_ip=')]
             from_user_address = response[response.index('_ip=')+4:response.index('_port=')]
             from_user_port = response[response.index('_port=')+6:-1]
-            friend_conn['name'] = from_user
+            friend_conn['username'] = from_user
             conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             conn.connect((from_user_address, int(from_user_port)))
             friend_conn['conn'] = conn
@@ -90,6 +90,7 @@ def show_active_users_window(active_users):
 def accept_request(user, top):
     client.send(('-accept_request_from_{}_to_{}-'.format(account_info['username'], user)).encode())
     friend_requests.remove(user)
+    friend_conn['username'] = user
     top.destroy()
     pass
 
@@ -279,6 +280,8 @@ def run_listen(server_listen):
     try:
         while True:
             client_listen, address_listen = server_listen.accept()
+            friend_conn['conn'] = client_listen
+            friend_list.append(friend_conn)
             t = threading.Thread(target=listen, args=(client_listen, address_listen))
             t.start()
 
@@ -286,6 +289,12 @@ def run_listen(server_listen):
         print(' Connection lose')
     pass
 
+
+def send_file():
+    pass
+
+def send_text():
+    pass
 
 def main_chat_box():
     # start a thread for listen response from server
@@ -296,8 +305,15 @@ def main_chat_box():
     t.start()
     global root2
     root2 = Tk()
+    width = 800
+    height = 500
+    screenwidth = root2.winfo_screenwidth()
+    screenheight = root2.winfo_screenheight()
+    alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+    root2.geometry(alignstr)
+    root2.resizable(width=False, height=False)
     root2.title("Chat APP v1")
-    root2.geometry("720x360")
+
 
     menu_bar = Menu(root2, tearoff=0)
 
@@ -315,6 +331,75 @@ def main_chat_box():
     menu_bar.add_cascade(label="Show", menu=show_menu)
 
     root2.config(menu=menu_bar)
+
+    # ===================================-=============
+    welcome_title = Label(root2)
+    ft = tkFont.Font(family='Times', size=10)
+    welcome_title["font"] = ft
+    welcome_title["fg"] = "#c8c3bc"
+    welcome_title["justify"] = "center"
+    welcome_title["text"] = "Welcome to chat app v1"
+    welcome_title.place(x=160, y=0, width=330, height=30)
+
+    #  =====================================
+    friend_frame = Listbox(root2)
+    friend_frame["borderwidth"] = "1px"
+    ft = tkFont.Font(family='Times', size=10)
+    friend_frame["font"] = ft
+    friend_frame["fg"] = "#c8c3bc"
+    friend_frame["justify"] = "center"
+    friend_frame.place(x=40, y=40, width=80, height=100)
+
+    # ===========================
+    imcome_mess_frame = Listbox(root2)
+    imcome_mess_frame["borderwidth"] = "1px"
+    ft = tkFont.Font(family='Times', size=10)
+    imcome_mess_frame["font"] = ft
+    imcome_mess_frame["fg"] = "#c8c3bc"
+    imcome_mess_frame["justify"] = "center"
+    imcome_mess_frame.place(x=40, y=150, width=80, height=268)
+
+
+    # =================================
+
+    main_body = Frame(root2, height=377, width=447)
+
+    main_body_text = Text(main_body)
+    body_text_scroll = Scrollbar(main_body)
+    main_body_text.focus_set()
+    body_text_scroll.pack(side=RIGHT, fill=Y)
+    main_body_text.pack(side=LEFT, fill=Y)
+    body_text_scroll.config(command=main_body_text.yview)
+    main_body_text.config(yscrollcommand=body_text_scroll.set)
+    main_body.place(x=130, y=40)
+
+    main_body_text.insert(END, "Text show here")
+    main_body_text.config(state=DISABLED)
+
+    # ==========================================
+
+
+    text_input = Entry(root2)
+    text_input["borderwidth"] = "1px"
+    ft = tkFont.Font(family='Times', size=10)
+    text_input["font"] = ft
+    text_input["fg"] = "#c8c3bc"
+    text_input["justify"] = "center"
+    text_input["text"] = "Entry"
+    text_input.place(x=40, y=440, width=458, height=30)
+    text_input.bind("<Return>", send_text)
+    # ==================================
+
+    send_file_btn = Button(root2)
+    send_file_btn["bg"] = "#6b6b6b"
+    ft = tkFont.Font(family='Times', size=10)
+    send_file_btn["font"] = ft
+    send_file_btn["fg"] = "#ffffff"
+    send_file_btn["justify"] = "center"
+    send_file_btn["text"] = "Button"
+    send_file_btn.place(x=510, y=440, width=70, height=25)
+    send_file_btn["command"] = send_file
+
     root2.mainloop()
 
 
@@ -333,55 +418,7 @@ def main():
     connect_button = Button(root, text='Login', command=login_window)
     connect_button.grid(column=2, row=5)
 
-    # connection_menu = Menu(menu_bar, tearoff=0)
-    # connection_menu.add_command(label="Quick Connect", command=QuickClient)
-    # connection_menu.add_command(
-    #     label="Connect on port", command=lambda: client_options_window(root))
-    # connection_menu.add_command(
-    #     label="Disconnect", command=lambda: processFlag("-001"))
-    # menu_bar.add_cascade(label="Connect", menu=connection_menu)
-    #
-    # server_menu = Menu(menu_bar, tearoff=0)
-    # server_menu.add_command(label="Launch server", command=QuickServer)
-    # server_menu.add_command(label="Listen on port",
-    #                         command=lambda: server_options_window(root))
-    # menu_bar.add_cascade(label="Server", menu=server_menu)
-    #
-    # menu_bar.add_command(label="Contacts", command=lambda:
-    #                     contacts_window(root))
 
-    # root.config(menu=menu_bar)
-    #
-    # main_body = Frame(root, height=20, width=50)
-    #
-    # main_body_text = Text(main_body)
-    # body_text_scroll = Scrollbar(main_body)
-    # main_body_text.focus_set()
-    # body_text_scroll.pack(side=RIGHT, fill=Y)
-    # main_body_text.pack(side=LEFT, fill=Y)
-    # body_text_scroll.config(command=main_body_text.yview)
-    # main_body_text.config(yscrollcommand=body_text_scroll.set)
-    # main_body.pack()
-    #
-    # main_body_text.insert(END, "Welcome to the chat program!")
-    # main_body_text.config(state=DISABLED)
-
-    # text_input = Entry(root, width=60)
-    # text_input.bind("<Return>", processUserText)  # when press enter function is called
-    # text_input.pack()
-
-    # statusConnect = StringVar()
-    # statusConnect.set("Connect")
-    # clientType = 1
-    # Radiobutton(root, text="Client", variable=clientType,
-    #             value=0, command=toOne).pack(anchor=E)
-    # Radiobutton(root, text="Server", variable=clientType,
-    #             value=1, command=toTwo).pack(anchor=E)
-    # connecter = Button(root, textvariable=statusConnect,
-    #                    command=lambda: connects(clientType))
-    # connecter.pack()
-    #
-    # load_contacts()
     root.mainloop()
 
 
