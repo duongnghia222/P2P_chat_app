@@ -63,6 +63,23 @@ def tcp(client, address):
                     to_user.send(('-friend_request_from_{}-'.format(from_user)).encode())
                     to_user.close()
                     print("i sent ")
+        elif command[:21] == '-accept_request_from_':
+            to_username = command[command.index('_to_')+4:-1]
+            from_user = command[21:command.index('_to_')]
+            from_user_address, from_user_port = ['', '']
+            for user in active_users:
+                if from_user == user['username']:
+                    from_user_address = user['address']
+                    from_user_port = user['port']
+            for user in active_users:
+                if to_username == user['username']:
+                    address_send = user['address']
+                    port_send = user['port']
+                    to_user = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    to_user.connect((address_send, int(port_send)))
+                    to_user.send(('-accept_request_from_{}_ip={}_port={}-'.format(from_user,
+                                                                                  from_user_address, from_user_port)).encode())
+                    to_user.close()
 
 def receive_connection():
     try:

@@ -21,7 +21,10 @@ port_server = 2223
 # ==================
 friends = []
 friend_requests = []
+block_list = []
 account_info = dict()
+friend_conn = dict()
+friend_list = []
 
 
 def listen(client_listen, address_listen):
@@ -32,14 +35,28 @@ def listen(client_listen, address_listen):
         if response[:21] == "-friend_request_from_":
             from_user = response[21:-1]
             friend_requests.append(from_user)
+        elif response[:21] == '-accept_request_from_':
+            from_user = response[21:response.index('_ip=')]
+            from_user_address = response[response.index('_ip=')+4:response.index('_port=')]
+            from_user_port = response[response.index('_port=')+6:-1]
+            friend_conn['name'] = from_user
+            conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            conn.connect((from_user_address, int(from_user_port)))
+            friend_conn['conn'] = conn
+            friend_list.append(friend_conn)
+            conn.send('hi {}'.format(from_user).encode())
+        elif response != '':
+            print(response)
 
-
-def connect_user(user):
+def connect_user(user, top):
     client.send("-friend_request_to_{}_from_{}-".format(user, account_info['username']).encode())
+    top.destroy()
     pass
 
 
-def block_user():
+def block_user(user, top):
+    block_list.append(user)
+    top.destroy()
     pass
 
 
@@ -56,24 +73,29 @@ def show_active_users_window(active_users):
     # buttons = Frame(top)
     add_btn = Button(top, text="Add & Chat",
                      command=lambda: connect_user(
-                         listbox.get(ACTIVE)))
+                         listbox.get(ACTIVE), top))
     add_btn.pack(side=BOTTOM)
     block_btn = Button(top, text="Block",
                        command=lambda: block_user(
-                           listbox.get(ACTIVE)))
+                           listbox.get(ACTIVE), top))
     block_btn.pack(side=BOTTOM)
 
     for index, username in enumerate(active_users):
-        if username == account_info['username']:
+        if username == account_info['username'] or (username in block_list):
             continue
         listbox.insert(index, username)
     listbox.pack(side=LEFT, fill=BOTH, expand=1)
 
 
-def accept_request(user):
+def accept_request(user, top):
+    client.send(('-accept_request_from_{}_to_{}-'.format(account_info['username'], user)).encode())
+    friend_requests.remove(user)
+    top.destroy()
     pass
 
-def delete_request(user):
+def delete_request(user, top):
+    block_list.append(user)
+    top.destroy()
     pass
 
 def show_friend_requests():
@@ -87,14 +109,16 @@ def show_friend_requests():
     # buttons = Frame(top)
     accept_btn = Button(top, text="Accept",
                      command=lambda: accept_request(
-                         listbox.get(ACTIVE)))
+                         listbox.get(ACTIVE), top))
     accept_btn.pack(side=BOTTOM)
     delete_btn = Button(top, text="Delete",
                        command=lambda: delete_request(
-                           listbox.get(ACTIVE)))
+                           listbox.get(ACTIVE), top))
     delete_btn.pack(side=BOTTOM)
 
     for index, username in enumerate(friend_requests):
+        if username in block_list:
+            continue
         listbox.insert(index, username)
     listbox.pack(side=LEFT, fill=BOTH, expand=1)
 
