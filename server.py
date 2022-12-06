@@ -6,9 +6,11 @@ FORMAT = 'utf-8'
 
 active_users = []
 
-
+# config server
 host = socket.gethostbyname(socket.gethostname())  # use public ip to have public access
 port = 2222
+# ===============
+# client_port = 2223
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host, port))
 def start_server():
@@ -48,6 +50,19 @@ def tcp(client, address):
                 user_name_list.append(user['username'])
             username_list_info = pickle.dumps(user_name_list)
             client.send(username_list_info)
+        elif command[:19] == '-friend_request_to_':
+            to_username = command[19:command.find('from')-1]
+            from_user = command[command.find('from')+5:-1]
+            # search for conn
+            for user in active_users:
+                if to_username == user['username']:
+                    address_send = user['address']
+                    port_send = user['port']
+                    to_user = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    to_user.connect((address_send, port_send))
+                    to_user.send(('-friend_request_from_{}-'.format(from_user)).encode())
+                    to_user.close()
+                    print("i sent ")
 
 def receive_connection():
     try:

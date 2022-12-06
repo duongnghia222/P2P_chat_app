@@ -11,19 +11,36 @@ FORMAT = 'utf-8'
 root = None
 root2 = None
 client = None
-server = "172.26.80.1"
+# config server
+server = "172.26.80.1"  # ip of the server
 port = 2222
+# =========
+server_server = "172.26.80.1"  # ip of the server of the app to receive response (user gethostbyname)
+port_server = 2223
+# port_for_response = 2223
 # ==================
 friends = []
-current_connections = []
-account_id = 1
-account_info = {
-    "id": account_id,
-    "username": "",
-    "age": 999,
-    "location":"",
-    "password":""}
+friend_requests = []
+account_info = dict()
 
+
+def listen(client_listen, address_listen):
+    while True:
+        # print("receiving command")
+        response = client_listen.recv(200)
+        response = response.decode()
+        if response[:21] == "-friend_request_from_":
+            from_user = response[21:-1]
+            friend_requests.append(from_user)
+
+
+def connect_user(user):
+    client.send("-friend_request_to_{}_from_{}-".format(user, account_info['username']).encode())
+    pass
+
+
+def block_user():
+    pass
 
 
 def show_active_users_window(active_users):
@@ -36,22 +53,49 @@ def show_active_users_window(active_users):
     listbox = Listbox(top, yscrollcommand=scrollbar.set)
     scrollbar.config(command=listbox.yview)
     scrollbar.pack(side=RIGHT, fill=Y)
-    # buttons = Frame(cWindow)
-    # cBut = Button(buttons, text="Connect",
-    #               command=lambda: contacts_connect(
-    #                                   listbox.get(ACTIVE).split(" ")))
-    # cBut.pack(side=LEFT)
-    # dBut = Button(buttons, text="Remove",
-    #               command=lambda: contacts_remove(
-    #                                   listbox.get(ACTIVE).split(" "), listbox))
-    # dBut.pack(side=LEFT)
-    # aBut = Button(buttons, text="Add",
-    #               command=lambda: contacts_add(listbox, cWindow))
-    # aBut.pack(side=LEFT)
-    # buttons.pack(side=BOTTOM)
+    # buttons = Frame(top)
+    add_btn = Button(top, text="Add & Chat",
+                     command=lambda: connect_user(
+                         listbox.get(ACTIVE)))
+    add_btn.pack(side=BOTTOM)
+    block_btn = Button(top, text="Block",
+                       command=lambda: block_user(
+                           listbox.get(ACTIVE)))
+    block_btn.pack(side=BOTTOM)
 
-    for username in active_users:
-        listbox.insert(END, username)
+    for index, username in enumerate(active_users):
+        if username == account_info['username']:
+            continue
+        listbox.insert(index, username)
+    listbox.pack(side=LEFT, fill=BOTH, expand=1)
+
+
+def accept_request(user):
+    pass
+
+def delete_request(user):
+    pass
+
+def show_friend_requests():
+    top = Toplevel(root2)
+    top.title("Friend Requests")
+    top.grab_set()
+    scrollbar = Scrollbar(top, orient=VERTICAL)
+    listbox = Listbox(top, yscrollcommand=scrollbar.set)
+    scrollbar.config(command=listbox.yview)
+    scrollbar.pack(side=RIGHT, fill=Y)
+    # buttons = Frame(top)
+    accept_btn = Button(top, text="Accept",
+                     command=lambda: accept_request(
+                         listbox.get(ACTIVE)))
+    accept_btn.pack(side=BOTTOM)
+    delete_btn = Button(top, text="Delete",
+                       command=lambda: delete_request(
+                           listbox.get(ACTIVE)))
+    delete_btn.pack(side=BOTTOM)
+
+    for index, username in enumerate(friend_requests):
+        listbox.insert(index, username)
     listbox.pack(side=LEFT, fill=BOTH, expand=1)
 
 
@@ -84,6 +128,8 @@ def connect_to_server(name, age, location, password, confirm_password, top):
     # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # client.connect((server, port))
     global account_info
+    account_info['address'] = server_server
+    account_info['port'] = port_server
     account_info['username'] = name
     account_info['age'] = age
     account_info['location'] = location
@@ -132,6 +178,7 @@ def connect_to_server_window():
     top.bind('<Return>', go)
     btn.grid(row=5, column=1)
 
+
 def login(usename, password, top):
     login_info = dict()
     login_info['username'] = usename
@@ -166,12 +213,14 @@ def login_window():
     password = Entry(top)
     password.focus_set()
     password.grid(row=1, column=1)
+
     def go(*args):
         login(username.get(), password.get(), top)
 
     btn = Button(top, text="Login", command=go)
     top.bind('<Return>', go)
     btn.grid(row=2, column=1)
+
 
 def save_history():
     pass
@@ -202,10 +251,25 @@ def change_info_window():
     btn.grid(row=2, column=1)
 
 
-def join_server():
+def run_listen(server_listen):
+    try:
+        while True:
+            client_listen, address_listen = server_listen.accept()
+            t = threading.Thread(target=listen, args=(client_listen, address_listen))
+            t.start()
+
+    except run_listen().error:
+        print(' Connection lose')
     pass
 
+
 def main_chat_box():
+    # start a thread for listen response from server
+    server_listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_listen.bind((server_server, port_server))
+    server_listen.listen()
+    t = threading.Thread(target=lambda: run_listen(server_listen))
+    t.start()
     global root2
     root2 = Tk()
     root2.title("Chat APP v1")
@@ -223,11 +287,11 @@ def main_chat_box():
     # ==========================================
     show_menu = Menu(menu_bar, tearoff=0)
     show_menu.add_command(label="Show active users", command=show_active_user)
+    show_menu.add_command(label="Show friend requests", command=show_friend_requests)
     menu_bar.add_cascade(label="Show", menu=show_menu)
 
     root2.config(menu=menu_bar)
     root2.mainloop()
-
 
 
 def main():
@@ -239,7 +303,6 @@ def main():
 
     # ==== show the join button at bottom ===========
     root.geometry("360x620")
-
 
     connect_button = Button(root, text='Register', command=connect_to_server_window)
     connect_button.grid(column=2, row=4)
