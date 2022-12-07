@@ -17,7 +17,7 @@ server = "172.17.13.232"  # ip of the server
 port = 2222
 # =========
 server_server = socket.gethostbyname(socket.gethostname())   # ip of the server of the app to receive response (user gethostbyname)
-port_server = 2223
+port_server = 2224
 # port_for_response = 2223
 # ==================
 friend_requests = []
@@ -47,7 +47,7 @@ def listen(client_listen, address_listen):
             elif response != '':
                 print(response)
         except:
-            # print('disconnect with', address_listen)
+            print('disconnect with', address_listen)
             client_listen.close()
 
 def connect_user(user, top):

@@ -22,13 +22,25 @@
 # print(response[response.index('_ip=')+4:response.index('_port=')])
 # print(response[response.index('_port=')+6:-1])
 
-import threading
-str = None
-lock = threading.Lock()
-str = input("text")
+# import threading
+# str = None
+# lock = threading.Lock()
+# str = input("text")
+#
+# while str:
+l = []
+if not l:
+    print("eu")
+l .append({'username': 'nghia', 'conn': 2002})
+print(l)
 
-while str:
+n = 'nhan'
+l.append({'username': n, 'conn': None})
+print(l)
 
+l[-1]['conn'] = 1996
+
+print(l)
 
 
 # import threading
