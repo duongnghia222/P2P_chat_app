@@ -63,7 +63,7 @@ def tcp(client, address):
                         to_user.connect((address_send, port_send))
                         to_user.send(('-friend_request_from_{}-'.format(from_user)).encode())
                         to_user.close()
-                        print("i sent ")
+
             elif command[:21] == '-accept_request_from_':
                 to_username = command[command.index('_to_')+4:-1]
                 from_user = command[21:command.index('_to_')]

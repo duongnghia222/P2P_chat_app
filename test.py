@@ -27,22 +27,37 @@
 # lock = threading.Lock()
 # str = input("text")
 #
-# while str:
-l = []
-if not l:
-    print("eu")
-l .append({'username': 'nghia', 'conn': 2002})
-print(l)
+# # while str:
+# l = []
+# if not l:
+#     print("eu")
+# l .append({'username': 'nghia', 'conn': 2002})
+# print(l)
+#
+# n = 'nhan'
+# l.append({'username': n, 'conn': None})
+# print(l)
+#
+# l[-1]['conn'] = 1996
+#
+# print(l)
 
-n = 'nhan'
-l.append({'username': n, 'conn': None})
-print(l)
-
-l[-1]['conn'] = 1996
-
-print(l)
-
-
+# list = []
+# msg = '1'
+# from_whom = 'nghia'
+# list.append({'username':from_whom, 'msg':[msg]})
+# print(list)
+# for user in list:
+#     if from_whom == user['username']:
+#         user['msg'].append('2')
+#
+# print(list)
+open = '123'
+rest = '345'
+msg = open + ': '+ rest
+print(msg)
+print(msg[:msg.index(':')])
+print(msg[msg.index(':')+2:])
 # import threading
 #
 #

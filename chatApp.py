@@ -25,7 +25,7 @@ block_list = []
 account_info = dict()
 friend_list = []
 top_frame_list = []
-
+msg_db_list = []
 
 def listen(client_listen, address_listen):
     while True:
@@ -43,9 +43,25 @@ def listen(client_listen, address_listen):
                 conn.connect((from_user_address, int(from_user_port)))
                 friend_list.append({'username': from_user, 'conn': conn})
                 top_frame_list.append({'username': from_user, 'top': None})
-                conn.send('hi {}'.format(from_user).encode())
+                # conn.send('hi {}'.format(from_user).encode())
             elif response != '':
+
                 print(response)
+                from_who = response[:response.index(':')]
+                msg = response[response.index(':')+2:]
+                for top in top_frame_list:
+                    if from_who == top['username']:
+                        if top['top'] is not None:
+                            top['top'].insert(END, response)
+                found = False
+                for msg_db in msg_db_list:
+                    if from_who == msg_db['username']:
+                        msg_db['message'].append(msg)
+                        found = True
+                if not found:
+                    msg_db_list.append({'username':from_who, 'message':[msg]})
+
+
         except:
             # print('disconnect with', address_listen)
             client_listen.close()
@@ -363,7 +379,7 @@ def main_chat_box():
                 added_list.append(friend['username'])
         friend_frame.after(1000, friend_frame_update)
     friend_frame_update()
-    def start_chat_with_a_user(*args):
+    def start_chat_with_a_user(is_open):
 
         for top_frame in top_frame_list:
             if friend_frame.get(ACTIVE) == top_frame['username']:
@@ -386,13 +402,20 @@ def main_chat_box():
                 chat_body_text_scroll.config(command=chat_main_body_text.yview)
                 chat_main_body_text.config(yscrollcommand=chat_body_text_scroll.set)
                 chat_main_body_text.place(x=10, y=10, width=295, height=429)
+                chat_main_body_text.insert(END, "Press Enter to send message\n")
+                if is_open:
+                    for msg_db in msg_db_list:
+                        if friend_frame.get(ACTIVE) == msg_db['username']:
+                            for line in msg_db['message']:
+                                chat_main_body_text.insert(END, friend_frame.get(ACTIVE) + ': ' + line)
+                                chat_main_body_text.insert(END, '\n')
+                else:
+                    chat_main_body_text.insert(END, "You are chatting with {} \n".format(friend_frame.get(ACTIVE)))
 
-                chat_main_body_text.insert(END, "You are chatting with {} \n".format(friend_frame.get(ACTIVE)))
-                chat_main_body_text.insert(END, "Press Enter to send message")
                 chat_main_body_text.insert(END, '\n\n')
-                chat_main_body_text.insert(END, top_frame_list)
+                #chat_main_body_text.insert(END, top_frame_list)
                 chat_main_body_text.insert(END, '\n\n')
-                chat_main_body_text.insert(END, friend_list)
+                #chat_main_body_text.insert(END, friend_list)
                 chat_main_body_text.config(state=DISABLED)
 
 
@@ -415,14 +438,21 @@ def main_chat_box():
                 def send_text(e):
                     for friend in friend_list:
                         if friend_frame.get(ACTIVE) == friend['username']:
-                            conn = friend['conn']
                             text = account_info['username'] + ": " + top_chat_box.get()
-                            conn.send(text.encode())
+                            try:
+                                friend['conn'].send(text.encode())
+                                chat_main_body_text.insert(END, 'You: '+top_chat_box.get())
+
+                            except:
+                                print("can not send message")
                     top_chat_box.delete(0, END)
                 top_chat_box.bind("<Return>", send_text)
 
         pass
-    friend_frame.bind('<Double-Button>', start_chat_with_a_user)
+
+    def foo(e):
+        start_chat_with_a_user(False)
+    friend_frame.bind('<Double-Button>', foo)
 
     # ===========================
     imcome_mess_frame = Listbox(root2)
@@ -431,10 +461,23 @@ def main_chat_box():
     imcome_mess_frame["font"] = ft
     imcome_mess_frame["fg"] = "yellow"
     imcome_mess_frame["bg"] = "grey"
-    imcome_mess_frame["justify"] = "center"
     imcome_mess_frame.place(x=40, y=150, width=80, height=268)
 
+    def open_conversation_with_user(*args):
+        start_chat_with_a_user(True)
 
+
+
+
+    imcome_mess_frame_added_list = []
+    def imcome_mess_frame_update():
+        for msg_db in msg_db_list:
+            if msg_db['username'] not in imcome_mess_frame_added_list:
+                imcome_mess_frame.insert(END, msg_db['username'] + ':' +msg_db['message'][-1])
+                imcome_mess_frame_added_list.append(msg_db['username'])
+        imcome_mess_frame.after(1000, imcome_mess_frame_update)
+    imcome_mess_frame_update()
+    imcome_mess_frame.bind('<Double-Button>', open_conversation_with_user)
     # =================================
 
     main_body = Frame(root2, height=377, width=447)
