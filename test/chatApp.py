@@ -54,6 +54,7 @@ def listen(client_listen, address_listen):
                         if top['top'] is not None:
                             print(top['top'])
                             top['top'].insert(END, response)
+                            top['top'].insert(END, '\n')
                 found = False
                 for msg_db in msg_db_list:
                     if from_who == msg_db['username']:
@@ -294,7 +295,6 @@ def change_info_window():
 
 
 def run_listen(server_listen):
-
     while True:
         try:
             client_listen, address_listen = server_listen.accept()
@@ -371,54 +371,50 @@ def main_chat_box():
 
     added_list = []
     def friend_frame_update():
-
         for friend in friend_list:
             if friend['username'] not in added_list:
                 friend_frame.insert(END, friend['username'])
                 added_list.append(friend['username'])
         friend_frame.after(1000, friend_frame_update)
+
     friend_frame_update()
     def start_chat_with_a_user(is_open):
-
         for top_frame in top_frame_list:
             if friend_frame.get(ACTIVE) == top_frame['username']:
-                top_frame['top'] = Toplevel(root2)
-                top_frame['top'].title("Conversation with {}".format(friend_frame.get(ACTIVE)))
+                top_main_chat_box = Toplevel(root2)
+                top_main_chat_box.title("Conversation with {}".format(friend_frame.get(ACTIVE)))
                 # top_frame['top'].grab_set()
                 top_width = 320
                 top_height = 500
-                top_screenwidth = top_frame['top'].winfo_screenwidth()
-                top_screenheight = top_frame['top'].winfo_screenheight()
+                top_screenwidth = top_main_chat_box.winfo_screenwidth()
+                top_screenheight = top_main_chat_box.winfo_screenheight()
                 top_alignstr = '%dx%d+%d+%d' % (top_width, top_height, (top_screenwidth - top_width) / 2, (top_screenheight - top_height) / 2)
-                top_frame['top'].geometry(top_alignstr)
-                top_frame['top'].resizable(width=False, height=False)
+                top_main_chat_box.geometry(top_alignstr)
+                top_main_chat_box.resizable(width=False, height=False)
 
 
-                chat_main_body_text = Text(top_frame['top'])
-                chat_body_text_scroll = Scrollbar(top_frame['top'])
+                top_frame['top'] = Text(top_main_chat_box)
+                chat_body_text_scroll = Scrollbar(top_main_chat_box)
                 chat_body_text_scroll.pack(side=RIGHT, fill=Y)
-                chat_main_body_text.pack(side=LEFT, fill=Y)
-                chat_body_text_scroll.config(command=chat_main_body_text.yview)
-                chat_main_body_text.config(yscrollcommand=chat_body_text_scroll.set)
-                chat_main_body_text.place(x=10, y=10, width=295, height=429)
-                chat_main_body_text.insert(END, "Press Enter to send message\n")
+                top_frame['top'].pack(side=LEFT, fill=Y)
+                chat_body_text_scroll.config(command=top_frame['top'].yview)
+                top_frame['top'].config(yscrollcommand=chat_body_text_scroll.set)
+                top_frame['top'].place(x=10, y=10, width=295, height=429)
+                top_frame['top'].insert(END, "Press Enter to send message\n")
                 if is_open:
                     for msg_db in msg_db_list:
                         if friend_frame.get(ACTIVE) == msg_db['username']:
                             for line in msg_db['message']:
-                                chat_main_body_text.insert(END, friend_frame.get(ACTIVE) + ': ' + line)
-                                chat_main_body_text.insert(END, '\n')
+                                top_frame['top'].insert(END, friend_frame.get(ACTIVE) + ': ' + line)
+                                top_frame['top'].insert(END, '\n')
                 else:
-                    chat_main_body_text.insert(END, "You are chatting with {} \n".format(friend_frame.get(ACTIVE)))
-
-                chat_main_body_text.insert(END, '\n\n')
-                #chat_main_body_text.insert(END, top_frame_list)
-                chat_main_body_text.insert(END, '\n\n')
-                #chat_main_body_text.insert(END, friend_list)
+                    top_frame['top'].insert(END, "You are chatting with {} \n".format(friend_frame.get(ACTIVE)))
 
 
 
-                top_send_file_btn = Button(top_frame['top'])
+
+
+                top_send_file_btn = Button(top_main_chat_box)
                 top_send_file_btn["bg"] = "#6b6b6b"
                 ft = tkFont.Font(family='Times', size=10)
                 top_send_file_btn["font"] = ft
@@ -427,7 +423,7 @@ def main_chat_box():
                 top_send_file_btn.place(x=240, y=450, width=70, height=30)
                 top_send_file_btn["command"] = send_file
 
-                top_chat_box = Entry(top_frame['top'])
+                top_chat_box = Entry(top_main_chat_box)
                 top_chat_box["borderwidth"] = "1px"
                 ft = tkFont.Font(family='Times', size=10)
                 top_chat_box["font"] = ft
@@ -438,9 +434,13 @@ def main_chat_box():
                     for friend in friend_list:
                         if friend_frame.get(ACTIVE) == friend['username']:
                             text = account_info['username'] + ": " + top_chat_box.get()
-                            print(friend['conn'])
-                            friend['conn'].send(text.encode())
-                            chat_main_body_text.insert(END, 'You: '+ top_chat_box.get() +'\n')
+                            # print(friend_list)
+                            # print(top_frame['top'])
+                            try:
+                                friend['conn'].send(text.encode())
+                            except:
+                                print('can not send message')
+                            top_frame['top'].insert(END, 'You: '+ top_chat_box.get() +'\n')
 
 
                     top_chat_box.delete(0, END)
