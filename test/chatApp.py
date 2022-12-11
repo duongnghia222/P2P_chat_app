@@ -13,7 +13,7 @@ root = None
 root2 = None
 client = None
 # config server
-server = "172.17.13.232"  # ip of the server
+server = socket.gethostbyname(socket.gethostname())  # ip of the server
 port = 2222
 # =========
 server_server = socket.gethostbyname(socket.gethostname())   # ip of the server of the app to receive response (user gethostbyname)
@@ -52,6 +52,7 @@ def listen(client_listen, address_listen):
                 for top in top_frame_list:
                     if from_who == top['username']:
                         if top['top'] is not None:
+                            print(top['top'])
                             top['top'].insert(END, response)
                 found = False
                 for msg_db in msg_db_list:
@@ -60,8 +61,6 @@ def listen(client_listen, address_listen):
                         found = True
                 if not found:
                     msg_db_list.append({'username':from_who, 'message':[msg]})
-
-
         except:
             # print('disconnect with', address_listen)
             client_listen.close()
@@ -295,17 +294,17 @@ def change_info_window():
 
 
 def run_listen(server_listen):
-    try:
-        while True:
+
+    while True:
+        try:
             client_listen, address_listen = server_listen.accept()
             if friend_list:
                 friend_list[-1]['conn'] = client_listen
             t = threading.Thread(target=listen, args=(client_listen, address_listen))
             t.start()
+        except:
+            server_listen.close()
 
-    except :
-        print(' Connection lose')
-        server_listen.close()
 
 
 def send_file():
@@ -416,7 +415,7 @@ def main_chat_box():
                 #chat_main_body_text.insert(END, top_frame_list)
                 chat_main_body_text.insert(END, '\n\n')
                 #chat_main_body_text.insert(END, friend_list)
-                chat_main_body_text.config(state=DISABLED)
+
 
 
                 top_send_file_btn = Button(top_frame['top'])
@@ -439,16 +438,14 @@ def main_chat_box():
                     for friend in friend_list:
                         if friend_frame.get(ACTIVE) == friend['username']:
                             text = account_info['username'] + ": " + top_chat_box.get()
-                            try:
-                                friend['conn'].send(text.encode())
-                                chat_main_body_text.insert(END, 'You: '+top_chat_box.get())
+                            print(friend['conn'])
+                            friend['conn'].send(text.encode())
+                            chat_main_body_text.insert(END, 'You: '+ top_chat_box.get() +'\n')
 
-                            except:
-                                print("can not send message")
+
                     top_chat_box.delete(0, END)
                 top_chat_box.bind("<Return>", send_text)
 
-        pass
 
     def foo(e):
         start_chat_with_a_user(False)
