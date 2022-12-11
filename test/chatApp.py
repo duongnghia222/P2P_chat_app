@@ -5,6 +5,8 @@ import threading
 import socket
 import pickle
 import time
+from tkinter.simpledialog import askstring
+from tkinter.filedialog import asksaveasfilename
 
 FORMAT = 'utf-8'
 
@@ -266,7 +268,26 @@ def login_window():
 
 
 def save_history():
-    pass
+    user = askstring('Save conversation', 'Save conversation of user ?')
+    print(user)
+    for top_frame in top_frame_list:
+        if top_frame['username'] == user:
+            file_name = asksaveasfilename(
+                title="Choose save location",
+                filetypes=[('Plain text', '*.txt'), ('Any File', '*.*')])
+            try:
+                filehandle = open(file_name + ".txt", "w")
+            except IOError:
+                print("Can't save history.")
+                return
+            contents = top_frame['top'].get(1.0, END)
+            for line in contents:
+                filehandle.write(line)
+            filehandle.close()
+            return 
+    messagebox.showerror('Info', 'Can not find user')
+
+    
 
 
 def change_info(name, age, top):

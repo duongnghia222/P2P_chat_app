@@ -5,6 +5,9 @@ import threading
 import socket
 import pickle
 import time
+import os
+from tkinter.simpledialog import askstring
+from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 FORMAT = 'utf-8'
 
@@ -266,7 +269,26 @@ def login_window():
 
 
 def save_history():
-    pass
+    user = askstring('Save conversation', 'Save conversation of user ?')
+    print(user)
+    for top_frame in top_frame_list:
+        if top_frame['username'] == user:
+            file_name = asksaveasfilename(
+                title="Choose save location",
+                filetypes=[('Plain text', '*.txt'), ('Any File', '*.*')])
+            try:
+                filehandle = open(file_name + ".txt", "w")
+            except IOError:
+                print("Can't save history.")
+                return
+            contents = top_frame['top'].get(1.0, END)
+            for line in contents:
+                filehandle.write(line)
+            filehandle.close()
+            return
+    messagebox.showerror('Info', 'Can not find user')
+
+
 
 
 def change_info(name, age, top):
@@ -304,13 +326,6 @@ def run_listen(server_listen):
             t.start()
         except:
             server_listen.close()
-
-
-
-def send_file():
-    pass
-
-
 
 
 def main_chat_box():
@@ -410,18 +425,18 @@ def main_chat_box():
                 else:
                     top_frame['top'].insert(END, "You are chatting with {} \n".format(friend_frame.get(ACTIVE)))
 
+                def send_file():
+                    print('send')
+                    file = askopenfilename(title="Choose a file", initialdir=os.path.dirname(__file__))
+                    filename = str(file.split('/')[-1])
+                    file_size = os.path.getsize(filename)
+                    print(file_size)
+                    print(filename)
 
 
-
-
-                top_send_file_btn = Button(top_main_chat_box)
-                top_send_file_btn["bg"] = "#6b6b6b"
-                ft = tkFont.Font(family='Times', size=10)
-                top_send_file_btn["font"] = ft
-                top_send_file_btn["fg"] = "#ffffff"
-                top_send_file_btn["text"] = "       Send File"
+                top_send_file_btn = Button(top_main_chat_box, text="Send File", command=send_file)
                 top_send_file_btn.place(x=240, y=450, width=70, height=30)
-                top_send_file_btn["command"] = send_file
+
 
                 top_chat_box = Entry(top_main_chat_box)
                 top_chat_box["borderwidth"] = "1px"
@@ -514,9 +529,8 @@ def main_chat_box():
     send_file_btn["font"] = ft
     send_file_btn["fg"] = "#ffffff"
     send_file_btn["justify"] = "center"
-    send_file_btn["text"] = "Button"
+    send_file_btn["text"] = "EXIT"
     send_file_btn.place(x=510, y=440, width=70, height=25)
-    send_file_btn["command"] = send_file
 
     root2.mainloop()
 
