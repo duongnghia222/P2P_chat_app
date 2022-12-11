@@ -55,13 +55,21 @@ def tcp(client, address):
                 to_username = command[19:command.find('from')-1]
                 from_user = command[command.find('from')+5:-1]
                 # search for conn
+                from_user_ip = ''
+                from_user_port = ''
+                for user in active_users:
+                    if from_user == user['username']:
+                        from_user_ip = user['address']
+                        from_user_port = user['port']
+
                 for user in active_users:
                     if to_username == user['username']:
                         address_send = user['address']
                         port_send = user['port']
                         to_user = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         to_user.connect((address_send, port_send))
-                        to_user.send(('-friend_request_from_{}-'.format(from_user)).encode())
+                        to_user.send(('-friend_request_from_{}_ip={}_port={}-'.format(from_user,
+                                        from_user_ip, from_user_port)).encode())
                         to_user.close()
 
             elif command[:21] == '-accept_request_from_':

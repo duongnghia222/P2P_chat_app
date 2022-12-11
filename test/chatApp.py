@@ -5,10 +5,13 @@ import threading
 import socket
 import pickle
 import time
+import os
 from tkinter.simpledialog import askstring
-from tkinter.filedialog import asksaveasfilename
+from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 FORMAT = 'utf-8'
+SEPARATOR = "<SEPARATOR>"
+BUFFER_SIZE = 4096 # send 4096 bytes each time step
 
 # =================
 root = None
@@ -23,6 +26,7 @@ port_server = 2224
 # port_for_response = 2223
 # ==================
 friend_requests = []
+friend_requests_detail = []
 block_list = []
 account_info = dict()
 friend_list = []
@@ -35,8 +39,11 @@ def listen(client_listen, address_listen):
             response = client_listen.recv(4000)
             response = response.decode()
             if response[:21] == "-friend_request_from_":
-                from_user = response[21:-1]
+                from_user = response[21:response.index('_ip=')]
+                from_user_address = response[response.index('_ip=') + 4:response.index('_port=')]
+                from_user_port = response[response.index('_port=') + 6:-1]
                 friend_requests.append(from_user)
+                friend_requests_detail.append({'username':from_user, 'ip':from_user_address,'port':from_user_port})
             elif response[:21] == '-accept_request_from_':
                 from_user = response[21:response.index('_ip=')]
                 from_user_address = response[response.index('_ip=')+4:response.index('_port=')]
@@ -46,6 +53,22 @@ def listen(client_listen, address_listen):
                 friend_list.append({'username': from_user, 'conn': conn})
                 top_frame_list.append({'username': from_user, 'top': None})
                 # conn.send('hi {}'.format(from_user).encode())
+            elif response[:11] == '-send_file-':
+                filename, file_from_user = response[11:].split(SEPARATOR)
+                filename = os.path.basename(filename)
+                print(filename)
+
+                # filesize = int(filesize)
+                with open(filename, "wb") as f:
+                    while True:
+                        # read 1024 bytes from the socket (receive)
+                        bytes_read = client_listen.recv(BUFFER_SIZE)
+                        if not bytes_read:
+                            break
+                        f.write(bytes_read)
+                    for top in top_frame_list:
+                        if file_from_user == top['username']:
+                            top['top'].insert(END, "Received file from {}".format(file_from_user))
             elif response != '':
 
                 print(response)
@@ -111,6 +134,13 @@ def accept_request(user, top):
     client.send(('-accept_request_from_{}_to_{}-'.format(account_info['username'], user)).encode())
     friend_requests.remove(user)
     friend_list.append({'username': user, 'conn': None})
+    for friend in friend_list:
+        if user == friend['username']:
+            friend['conn'] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            for d in friend_requests_detail:
+                if user == d['username']:
+                    friend['conn'].connect((d['ip'], int(d['port'])))
+
     top_frame_list.append({'username': user, 'top': None})
     top.destroy()
     pass
@@ -284,10 +314,10 @@ def save_history():
             for line in contents:
                 filehandle.write(line)
             filehandle.close()
-            return 
+            return
     messagebox.showerror('Info', 'Can not find user')
 
-    
+
 
 
 def change_info(name, age, top):
@@ -319,19 +349,10 @@ def run_listen(server_listen):
     while True:
         try:
             client_listen, address_listen = server_listen.accept()
-            if friend_list:
-                friend_list[-1]['conn'] = client_listen
             t = threading.Thread(target=listen, args=(client_listen, address_listen))
             t.start()
         except:
             server_listen.close()
-
-
-
-def send_file():
-    pass
-
-
 
 
 def main_chat_box():
@@ -431,18 +452,34 @@ def main_chat_box():
                 else:
                     top_frame['top'].insert(END, "You are chatting with {} \n".format(friend_frame.get(ACTIVE)))
 
+                def send_file():
+                    file = askopenfilename(title="Choose a file", initialdir=os.path.dirname(__file__))
+                    filename = str(file.split('/')[-1])
+                    file_size = os.path.getsize(file)
+                    for friend in friend_list:
+                        if friend_frame.get(ACTIVE) == friend['username']:
+                            conn = friend['conn']
+                            conn.send(('-send_file-{}{}{}'.format(filename, SEPARATOR, friend['username'])).encode())
+                            time.sleep(0.1)
+                            with open(file, "rb") as f:
+                                while True:
+                                    bytes_read = f.read(BUFFER_SIZE)
+                                    if not bytes_read:
+                                        break
+                                    conn.sendall(bytes_read)
+                            print("file sent")
+                            top_frame['top'].insert(END, "file sent. Size: {} \n".format(file_size))
 
 
 
+                    # print(file_size)
+                    # print(filename)
 
-                top_send_file_btn = Button(top_main_chat_box)
-                top_send_file_btn["bg"] = "#6b6b6b"
-                ft = tkFont.Font(family='Times', size=10)
-                top_send_file_btn["font"] = ft
-                top_send_file_btn["fg"] = "#ffffff"
-                top_send_file_btn["text"] = "       Send File"
+
+
+                top_send_file_btn = Button(top_main_chat_box, text="      Send File", command=send_file)
                 top_send_file_btn.place(x=240, y=450, width=70, height=30)
-                top_send_file_btn["command"] = send_file
+
 
                 top_chat_box = Entry(top_main_chat_box)
                 top_chat_box["borderwidth"] = "1px"
@@ -535,9 +572,8 @@ def main_chat_box():
     send_file_btn["font"] = ft
     send_file_btn["fg"] = "#ffffff"
     send_file_btn["justify"] = "center"
-    send_file_btn["text"] = "Button"
+    send_file_btn["text"] = "EXIT"
     send_file_btn.place(x=510, y=440, width=70, height=25)
-    send_file_btn["command"] = send_file
 
     root2.mainloop()
 

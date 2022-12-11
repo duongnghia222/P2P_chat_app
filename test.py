@@ -15,7 +15,7 @@
 # from_user = 'nhaan'
 # from_user_address = '18101996'
 # from_user_port = '1802'
-# response = ('-accept_request_from_{}_ip={}_port={}-'.format(from_user,
+# response = ('-friend_request_from_{}_ip={}_port={}-'.format(from_user,
 #                                                 from_user_address, from_user_port))
 # print(response[:21])
 # print(response[21:response.index('_ip=')])
@@ -52,12 +52,12 @@
 #         user['msg'].append('2')
 #
 # print(list)
-open = '123'
-rest = '345'
-msg = open + ': '+ rest
-print(msg)
-print(msg[:msg.index(':')])
-print(msg[msg.index(':')+2:])
+# open = '123'
+# rest = '345'
+# msg = open + ': '+ rest
+# print(msg)
+# print(msg[:msg.index(':')])
+# print(msg[msg.index(':')+2:])
 # import threading
 #
 #
@@ -85,3 +85,9 @@ print(msg[msg.index(':')+2:])
 #
 #     # both threads completely executed
 #     print("Done!")
+filename = 'hello.txt'
+SEPARATOR = "<SEPARATOR>"
+file_size = 4
+response = '-send_file-{}{}{}'.format(filename, SEPARATOR, file_size)
+print(response[11:])
+print(response[:11])

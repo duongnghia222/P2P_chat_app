@@ -1,12 +1,13 @@
 Press Enter to send message
-2: sdfsadf
-2: asdfasdf
-2: sdfasd
-2: asdf
-2: ss
-2: ss
-2: s
-2: ss
-2: s
-You: fdsf
+2: 1
+2: 1
+2: 2
+2: 3
+2: 4
+2: 4
+2: 5
+2: 6
+2: 7
+2: 8
+2: helo
 
