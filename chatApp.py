@@ -1,3 +1,4 @@
+import sys
 from tkinter import *
 from tkinter import messagebox
 import tkinter.font as tkFont
@@ -17,6 +18,7 @@ BUFFER_SIZE = 4096 # send 4096 bytes each time step
 root = None
 root2 = None
 client = None
+server_listen = None
 # config server
 server = socket.gethostbyname(socket.gethostname())  # ip of the server
 port = 2222
@@ -203,9 +205,7 @@ def connect_to_server(name, age, location, password, confirm_password, top):
         if name == username:
             messagebox.showerror("Sign Up", "Username existed")
             return
-    # client.close()
-    # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # client.connect((server, port))
+
     global account_info
     account_info['address'] = server_server
     account_info['port'] = port_server
@@ -361,6 +361,7 @@ def run_listen(server_listen):
 
 def main_chat_box():
     # start a thread for listen response from server
+    global server_listen
     server_listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_listen.bind((server_server, port_server))
     server_listen.listen()
@@ -385,7 +386,7 @@ def main_chat_box():
     tool_menu.add_command(label="Change my information",
                           command=change_info_window)
     tool_menu.add_separator()  # <hr> to separate exit option
-    tool_menu.add_command(label="Exit", command=root.destroy)
+    tool_menu.add_command(label="Exit", command=exit_app)
     menu_bar.add_cascade(label="Tool", menu=tool_menu)
     # ==========================================
     show_menu = Menu(menu_bar, tearoff=0)
@@ -554,8 +555,21 @@ def main_chat_box():
     main_body_text.config(yscrollcommand=body_text_scroll.set)
     main_body.place(x=130, y=40)
 
-    main_body_text.insert(END, "Text show here")
-    main_body_text.insert(END, '\n\n')
+    main_body_text.insert(END, "Welcome to my chat app\n")
+    main_body_text.insert(END, "Username: {}\n".format(account_info['username']))
+    main_body_text.insert(END, "Age: {}\n".format(account_info['age']))
+    main_body_text.insert(END, "Location: {}\n".format(account_info['location']))
+    main_body_text.insert(END, " #####  #     #    #    #######       #    ######  ######  \n")
+    main_body_text.insert(END, "#     # #     #   # #      #         # #   #     # #     #\n")
+    main_body_text.insert(END, "#       #     #  #   #     #        #   #  #     # #     #\n")
+    main_body_text.insert(END, "#       ####### #     #    #       #     # ######  ######\n")
+    main_body_text.insert(END, "#       #     # #######    #       ####### #       #\n")
+    main_body_text.insert(END, "#     # #     # #     #    #       #     # #       #\n")
+    main_body_text.insert(END, " #####  #     # #     #    #       #     # #       #       \n")
+
+
+
+
 
     main_body_text.config(state=DISABLED)
 
@@ -570,20 +584,29 @@ def main_chat_box():
     text_input["justify"] = "center"
     text_input["text"] = "Entry"
     text_input.place(x=40, y=440, width=458, height=30)
-    # text_input.bind("<Return>", send_text)
     text_input.config(state=DISABLED)
     # ==================================
 
-    send_file_btn = Button(root2)
-    send_file_btn["bg"] = "#6b6b6b"
+    exit_btn = Button(root2)
+    exit_btn["bg"] = "#6b6b6b"
     ft = tkFont.Font(family='Times', size=10)
-    send_file_btn["font"] = ft
-    send_file_btn["fg"] = "#ffffff"
-    send_file_btn["justify"] = "center"
-    send_file_btn["text"] = "EXIT"
-    send_file_btn.place(x=510, y=440, width=70, height=25)
+    exit_btn["font"] = ft
+    exit_btn["fg"] = "#ffffff"
+    exit_btn["justify"] = "center"
+    exit_btn["text"] = "EXIT"
+    exit_btn.place(x=510, y=440, width=70, height=25)
+    exit_btn['command'] = exit_app
 
     root2.mainloop()
+
+
+def exit_app():
+    for friend in friend_list:
+        friend['conn'].close()
+    server_listen.close()
+    client.close()
+    root2.destroy()
+    sys.exit()
 
 
 def main():
