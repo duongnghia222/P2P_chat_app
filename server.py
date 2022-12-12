@@ -23,7 +23,6 @@ def start_server():
 def tcp(client, address):
     while True:
         try:
-            # print("receiving command")
             command = client.recv(50)
             command = command.decode()
             if command == "-sign_up-":
@@ -93,7 +92,6 @@ def tcp(client, address):
                                                                                       from_user_port)).encode())
                         to_user.close()
         except:
-            # print('disconnect with ', address)
             client.close()
 
 

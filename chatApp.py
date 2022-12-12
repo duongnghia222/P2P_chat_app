@@ -59,32 +59,23 @@ def listen(client_listen):
             elif response[:11] == '-send_file-':
                 filename, file_from_user = response[11:].split(SEPARATOR)
                 filename = os.path.basename(filename)
-                print(filename)
                 bytes_read = client_listen.recv(BUFFER_SIZE)
-                print(bytes_read)
                 with open(filename, "wb") as f:
-                    print("file opened")
                     while True:
                         f.write(bytes_read)
                         # read 1024 bytes from the socket (receive)
                         bytes_read = client_listen.recv(BUFFER_SIZE)
                         if not bytes_read or bytes_read == '-EOF-'.encode():
                             break
-                print('received file')
-                print(file_from_user)
-                print(top_frame_list)
                 for top in top_frame_list:
                     if file_from_user == top['username']:
                         top['top'].insert(END, "Received file from {} \n".format(file_from_user))
             elif response != '':
-
-                print(response)
                 from_who = response[:response.index(':')]
                 msg = response[response.index(':') + 2:]
                 for top in top_frame_list:
                     if from_who == top['username']:
                         if top['top'] is not None:
-                            print(top['top'])
                             top['top'].insert(END, response)
                             top['top'].insert(END, '\n')
                 found = False
@@ -306,7 +297,6 @@ def login_window():
 
 def save_history():
     user = askstring('Save conversation', 'Save conversation of user ?')
-    print(user)
     for top_frame in top_frame_list:
         if top_frame['username'] == user:
             file_name = asksaveasfilename(
@@ -471,17 +461,12 @@ def main_chat_box():
                             with open(file, "rb") as f:
                                 while True:
                                     bytes_read = f.read(BUFFER_SIZE)
-                                    print(bytes_read)
                                     if not bytes_read:
                                         break
                                     conn.send(bytes_read)
                                 time.sleep(0.1)
                                 conn.send('-EOF-'.encode())
-                            print("file sent")
                             top_frame['top'].insert(END, "file sent. Size: {} \n".format(file_size))
-
-                    # print(file_size)
-                    # print(filename)
 
                 top_send_file_btn = Button(top_main_chat_box, text="      Send File", command=send_file)
                 top_send_file_btn.place(x=240, y=450, width=70, height=30)
@@ -496,8 +481,6 @@ def main_chat_box():
                     for friend in friend_list:
                         if friend_frame.get(ACTIVE) == friend['username']:
                             text = account_info['username'] + ": " + top_chat_box.get()
-                            # print(friend_list)
-                            # print(top_frame['top'])
                             try:
                                 friend['conn'].send(text.encode())
                             except:
@@ -532,7 +515,7 @@ def main_chat_box():
             if msg_db['username'] not in income_mess_frame_added_list:
                 income_mess_frame.insert(END, msg_db['username'] + ':' + msg_db['message'][-1])
                 income_mess_frame_added_list.append(msg_db['username'])
-        income_mess_frame.after(1000, income_mess_frame_update)
+        income_mess_frame.after(3000, income_mess_frame_update)
 
     income_mess_frame_update()
     income_mess_frame.bind('<Double-Button>', open_conversation_with_user)
