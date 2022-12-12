@@ -315,36 +315,55 @@ def save_history():
     messagebox.showerror('Info', 'Can not find user')
 
 
-def change_info(name, age, top):
-    account_info['username'] = name
+def change_info(age, location, password, age_label, location_label, top):
     account_info['age'] = age
+    account_info['location'] = location
+    account_info['password'] = password
+    age_label.config(text='AGE: {}'.format(age))
+    location_label.config(text='LOCATION: {}'.format(location))
+    client.send('-change_information-'.encode())
     dump_client_info = pickle.dumps(account_info)
     client.send(dump_client_info)
     messagebox.showinfo("Update information.", "Information updated")
     top.destroy()
 
 
-def change_info_window():
-    top = Toplevel(root)
+def change_info_window(age_label, location_label):
+    top = Toplevel(root2)
     top.title("Change Information")
     top.grab_set()  # prevent users from interacting with the main window
     Label(top, text="Username:").grid(row=0)
     name = Entry(top)
+    name.insert(0, account_info['username'])
+    name.config(state="disabled")
     name.focus_set()
     name.grid(row=0, column=1)
     Label(top, text="Age:").grid(row=1)
     age = Entry(top)
+    age.insert(0, account_info['age'])
     age.focus_set()
     age.grid(row=1, column=1)
-    btn = Button(top, text="Change", command=lambda: change_info(name.get(), age.get(), top))
-    btn.grid(row=2, column=1)
+    Label(top, text="Location:").grid(row=2)
+    location = Entry(top)
+    location.insert(0, account_info['location'])
+    location.focus_set()
+    location.grid(row=2, column=1)
+    Label(top, text="Password:").grid(row=3)
+    password = Entry(top)
+    password.insert(0, account_info['password'])
+    password.focus_set()
+    password.grid(row=3, column=1)
+
+    btn = Button(top, text="Change", command=lambda: change_info(age.get(), location.get(),
+                                                                 password.get(), age_label, location_label, top))
+    btn.grid(row=4, column=1)
 
 
 def run_listen():
     while True:
         try:
             client_listen, address_listen = server_listen.accept()
-            t = threading.Thread(target=listen, args=client_listen)
+            t = threading.Thread(target=listen, args=(client_listen, address_listen))
             t.start()
         except:
             server_listen.close()
@@ -356,7 +375,7 @@ def main_chat_box():
     server_listen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_listen.bind((server_server, port_server))
     server_listen.listen()
-    t = threading.Thread(target=lambda: run_listen(server_listen))
+    t = threading.Thread(target=run_listen)
     t.start()
     global root2
     root2 = Tk()
@@ -374,7 +393,7 @@ def main_chat_box():
     tool_menu = Menu(menu_bar, tearoff=0)
     tool_menu.add_command(label="Save chat", command=save_history)
     tool_menu.add_command(label="Change my information",
-                          command=change_info_window)
+                          command= lambda: change_info_window(age_label, location_label))
     tool_menu.add_separator()  # <hr> to separate exit option
     tool_menu.add_command(label="Exit", command=exit_app)
     menu_bar.add_cascade(label="Tool", menu=tool_menu)
@@ -521,7 +540,7 @@ def main_chat_box():
     income_mess_frame.bind('<Double-Button>', open_conversation_with_user)
     # =================================
 
-    main_body = Frame(root2, height=377, width=447)
+    main_body = Frame(root2, height=100, width=447)
 
     main_body_text = Text(main_body)
     body_text_scroll = Scrollbar(main_body)
@@ -532,10 +551,10 @@ def main_chat_box():
     main_body_text.config(yscrollcommand=body_text_scroll.set)
     main_body.place(x=130, y=40)
 
-    main_body_text.insert(END, "Welcome to my chat app\n")
-    main_body_text.insert(END, "Username: {}\n".format(account_info['username']))
-    main_body_text.insert(END, "Age: {}\n".format(account_info['age']))
-    main_body_text.insert(END, "Location: {}\n".format(account_info['location']))
+    main_body_text.insert(END, "Welcome to \n\n")
+    # main_body_text.insert(END, "Username: {}\n".format(account_info['username']))
+    # main_body_text.insert(END, "Age: {}\n".format(account_info['age']))
+    # main_body_text.insert(END, "Location: {}\n".format(account_info['location']))
     main_body_text.insert(END, " #####  #     #    #    #######       #    ######  ######  \n")
     main_body_text.insert(END, "#     # #     #   # #      #         # #   #     # #     #\n")
     main_body_text.insert(END, "#       #     #  #   #     #        #   #  #     # #     #\n")
@@ -545,6 +564,16 @@ def main_chat_box():
     main_body_text.insert(END, " #####  #     # #     #    #       #     # #       #       \n")
 
     main_body_text.config(state=DISABLED)
+
+    # ==========================================
+    main_label = Label(main_body, text='YOUR INFORMATION:', font=('Arial', 23))
+    username_label = Label(main_body, text='USERNAME: {}'.format(account_info['username']), font=('Arial', 13))
+    age_label = Label(main_body, text='AGE: {}'.format(account_info['age']), font=('Arial', 13))
+    location_label = Label(main_body, text='LOCATION: {}'.format(account_info['location']), font=('Arial', 13))
+    main_label.place(x=10, y=160)
+    username_label.place(x=10, y=210)
+    age_label.place(x=10, y=240)
+    location_label.place(x=10, y=270)
 
     # ==========================================
 

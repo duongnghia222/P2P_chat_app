@@ -91,6 +91,16 @@ def tcp(client, address):
                                                                                       from_user_address,
                                                                                       from_user_port)).encode())
                         to_user.close()
+            elif command == '-change_information-':
+                dump_client_info = client.recv(4096)  # receive at most 4096 bytes
+                client_info = pickle.loads(dump_client_info)
+                for user in active_users:
+                    if user['username'] == client_info['username']:
+                        user['age'] = client_info['age']
+                        user['location'] = client_info['location']
+                        user['password'] = client_info['password']
+                print(client_info['username'], "updated information")
+                print(active_users)
         except:
             client.close()
 
