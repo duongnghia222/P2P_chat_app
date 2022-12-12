@@ -101,6 +101,12 @@ def tcp(client, address):
                         user['password'] = client_info['password']
                 print(client_info['username'], "updated information")
                 print(active_users)
+            elif command[:20] == '-send_infor_of_user_':
+                of_user = command[20:]
+                for user in active_users:
+                    if of_user == user['username']:
+                        dump_client_info_of_user = pickle.dumps({"location": user['location'], "age": user['age']})
+                        client.send(dump_client_info_of_user)
         except:
             client.close()
 

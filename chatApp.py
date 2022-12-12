@@ -36,7 +36,7 @@ top_frame_list = []
 msg_db_list = []
 
 
-def listen(client_listen):
+def listen(client_listen, address):
     while True:
         try:
             response = client_listen.recv(4000)
@@ -101,9 +101,8 @@ def block_user(user, top):
     pass
 
 
+
 def show_active_users_window(active_users):
-    """Displays
-    """
     top = Toplevel(root2)
     top.title("Active Users")
     top.grab_set()
@@ -124,7 +123,23 @@ def show_active_users_window(active_users):
     for index, username in enumerate(active_users):
         if username == account_info['username'] or (username in block_list):
             continue
-        listbox.insert(index, username)
+        listbox.insert(END, username)
+
+    def show_infor(e):
+        user = listbox.get(listbox.curselection())
+        top_top = Toplevel(root2)
+        top_top.title("Show Information")
+        top_top.grab_set()
+        username_label = Label(top_top, text='USERNAME: {}'.format(user))
+        client.send('-send_infor_of_user_{}'.format(user).encode())
+        dump_client_info = client.recv(4096)  # receive at most 4096 bytes
+        client_info = pickle.loads(dump_client_info)
+        username_label.pack()
+        age_label = Label(top_top, text='AGE: {}'.format(client_info['age']))
+        age_label.pack()
+        location_label = Label(top_top, text='LOCATION: {}'.format(client_info['location']))
+        location_label.pack()
+    listbox.bind('<Double-Button>', show_infor)
     listbox.pack(side=LEFT, fill=BOTH, expand=1)
 
 
@@ -172,6 +187,22 @@ def show_friend_requests():
         if username in block_list:
             continue
         listbox.insert(index, username)
+
+    def show_infor(e):
+        user = listbox.get(listbox.curselection())
+        top_top = Toplevel(root2)
+        top_top.title("Show Information")
+        top_top.grab_set()
+        username_label = Label(top_top, text='USERNAME: {}'.format(user))
+        client.send('-send_infor_of_user_{}'.format(user).encode())
+        dump_client_info = client.recv(4096)  # receive at most 4096 bytes
+        client_info = pickle.loads(dump_client_info)
+        username_label.pack()
+        age_label = Label(top_top, text='AGE: {}'.format(client_info['age']))
+        age_label.pack()
+        location_label = Label(top_top, text='LOCATION: {}'.format(client_info['location']))
+        location_label.pack()
+    listbox.bind('<Double-Button>', show_infor)
     listbox.pack(side=LEFT, fill=BOTH, expand=1)
 
 
@@ -436,10 +467,16 @@ def main_chat_box():
     friend_frame_update()
 
     def start_chat_with_a_user(is_open):
+        which_user = None
+        if is_open:
+            which_user = income_mess_frame.get(ACTIVE)[:income_mess_frame.get(ACTIVE).index(':')]
+        else:
+            which_user = friend_frame.get(ACTIVE)
+        print(which_user)
         for top_frame in top_frame_list:
-            if friend_frame.get(ACTIVE) == top_frame['username']:
+            if which_user == top_frame['username']:
                 top_main_chat_box = Toplevel(root2)
-                top_main_chat_box.title("Conversation with {}".format(friend_frame.get(ACTIVE)))
+                top_main_chat_box.title("Conversation with {}".format(which_user))
                 # top_frame['top'].grab_set()
                 top_width = 320
                 top_height = 500
@@ -460,19 +497,19 @@ def main_chat_box():
                 top_frame['top'].insert(END, "Press Enter to send message\n")
                 if is_open:
                     for msg_db in msg_db_list:
-                        if friend_frame.get(ACTIVE) == msg_db['username']:
+                        if which_user == msg_db['username']:
                             for line in msg_db['message']:
-                                top_frame['top'].insert(END, friend_frame.get(ACTIVE) + ': ' + line)
+                                top_frame['top'].insert(END, which_user + ': ' + line)
                                 top_frame['top'].insert(END, '\n')
                 else:
-                    top_frame['top'].insert(END, "You are chatting with {} \n".format(friend_frame.get(ACTIVE)))
+                    top_frame['top'].insert(END, "You are chatting with {} \n".format(which_user))
 
                 def send_file():
                     file = askopenfilename(title="Choose a file", initialdir=os.path.dirname(__file__))
                     filename = str(file.split('/')[-1])
                     file_size = os.path.getsize(file)
                     for friend in friend_list:
-                        if friend_frame.get(ACTIVE) == friend['username']:
+                        if which_user == friend['username']:
                             conn = friend['conn']
                             conn.send(
                                 ('-send_file-{}{}{}'.format(filename, SEPARATOR, account_info['username'])).encode())
@@ -498,7 +535,7 @@ def main_chat_box():
 
                 def send_text(e):
                     for friend in friend_list:
-                        if friend_frame.get(ACTIVE) == friend['username']:
+                        if which_user == friend['username']:
                             text = account_info['username'] + ": " + top_chat_box.get()
                             try:
                                 friend['conn'].send(text.encode())
@@ -532,7 +569,7 @@ def main_chat_box():
     def income_mess_frame_update():
         for msg_db in msg_db_list:
             if msg_db['username'] not in income_mess_frame_added_list:
-                income_mess_frame.insert(END, msg_db['username'] + ':' + msg_db['message'][-1])
+                income_mess_frame.insert(END, msg_db['username'] + ': ' + msg_db['message'][-1])
                 income_mess_frame_added_list.append(msg_db['username'])
         income_mess_frame.after(3000, income_mess_frame_update)
 
