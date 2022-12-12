@@ -24,7 +24,7 @@ server = socket.gethostbyname(socket.gethostname())  # ip of the server
 port = 2222
 # =========
 server_server = socket.gethostbyname(socket.gethostname())  # ip of the server of the app to receive response
-port_server = 2223
+port_server = 2224
 # port_for_response = 2223
 # ==================
 friend_requests = []

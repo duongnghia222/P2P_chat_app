@@ -24,7 +24,7 @@ server = socket.gethostbyname(socket.gethostname())  # ip of the server
 port = 2222
 # =========
 server_server = socket.gethostbyname(socket.gethostname())  # ip of the server of the app to receive response
-port_server = 2224
+port_server = 2225
 # port_for_response = 2223
 # ==================
 friend_requests = []
@@ -69,15 +69,19 @@ def listen(client_listen, address):
                             break
                 for top in top_frame_list:
                     if file_from_user == top['username']:
+                        top['top'].config(state="normal")
                         top['top'].insert(END, "Received file from {} \n".format(file_from_user))
+                        top['top'].config(state="disabled")
             elif response != '':
                 from_who = response[:response.index(':')]
                 msg = response[response.index(':') + 2:]
                 for top in top_frame_list:
                     if from_who == top['username']:
                         if top['top'] is not None:
+                            top['top'].config(state="normal")
                             top['top'].insert(END, response)
                             top['top'].insert(END, '\n')
+                            top['top'].config(state="disabled")
                 found = False
                 for msg_db in msg_db_list:
                     if from_who == msg_db['username']:
@@ -503,7 +507,7 @@ def main_chat_box():
                                 top_frame['top'].insert(END, '\n')
                 else:
                     top_frame['top'].insert(END, "You are chatting with {} \n".format(which_user))
-
+                top_frame['top'].config(state="disabled")
                 def send_file():
                     file = askopenfilename(title="Choose a file", initialdir=os.path.dirname(__file__))
                     filename = str(file.split('/')[-1])
@@ -522,7 +526,9 @@ def main_chat_box():
                                     conn.send(bytes_read)
                                 time.sleep(0.1)
                                 conn.send('-EOF-'.encode())
+                            top_frame['top'].config(state="normal")
                             top_frame['top'].insert(END, "file sent. Size: {} \n".format(file_size))
+                            top_frame['top'].config(state="disabled")
 
                 top_send_file_btn = Button(top_main_chat_box, text="      Send File", command=send_file)
                 top_send_file_btn.place(x=240, y=450, width=70, height=30)
@@ -541,7 +547,9 @@ def main_chat_box():
                                 friend['conn'].send(text.encode())
                             except:
                                 print('can not send message')
+                            top_frame['top'].config(state="normal")
                             top_frame['top'].insert(END, 'You: ' + top_chat_box.get() + '\n')
+                            top_frame['top'].config(state="disabled")
 
                     top_chat_box.delete(0, END)
 
