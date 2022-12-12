@@ -3,7 +3,7 @@ import threading
 import sys
 
 nickname = input("Choose a nickname:\n")
-SERVER = socket.gethostbyname(socket.gethostname())
+SERVER = "27.78.36.167"
 port = 2224
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 

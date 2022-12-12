@@ -92,7 +92,9 @@
 # print(response[11:])
 # print(response[:11])
 
-user = 'nghia'
-command = '-send_infor_of_user_{}'.format(user)
-print(command[:20])
-print(command[20:])
+# user = 'nghia'
+# command = '-send_infor_of_user_{}'.format(user)
+# print(command[:20])
+# print(command[20:])
+
+print("\N{grinning face}")

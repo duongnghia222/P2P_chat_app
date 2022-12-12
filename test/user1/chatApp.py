@@ -482,7 +482,7 @@ def main_chat_box():
                 top_main_chat_box = Toplevel(root2)
                 top_main_chat_box.title("Conversation with {}".format(which_user))
                 # top_frame['top'].grab_set()
-                top_width = 320
+                top_width = 350
                 top_height = 500
                 top_screenwidth = top_main_chat_box.winfo_screenwidth()
                 top_screenheight = top_main_chat_box.winfo_screenheight()
@@ -508,6 +508,7 @@ def main_chat_box():
                 else:
                     top_frame['top'].insert(END, "You are chatting with {} \n".format(which_user))
                 top_frame['top'].config(state="disabled")
+
                 def send_file():
                     file = askopenfilename(title="Choose a file", initialdir=os.path.dirname(__file__))
                     filename = str(file.split('/')[-1])
@@ -530,8 +531,27 @@ def main_chat_box():
                             top_frame['top'].insert(END, "file sent. Size: {} \n".format(file_size))
                             top_frame['top'].config(state="disabled")
 
-                top_send_file_btn = Button(top_main_chat_box, text="      Send File", command=send_file)
-                top_send_file_btn.place(x=240, y=450, width=70, height=30)
+                def send_emoji():
+                    emoji_frame = Toplevel(top_main_chat_box, height=100, width=50)
+                    emoji_frame.title("Emoji")
+                    emoji_list = Listbox(emoji_frame)
+                    emoji_list.pack()
+                    emoji_list.insert(END, "\N{grinning face}")
+                    emoji_list.insert(END, "\N{grinning face with smiling eyes}")
+                    emoji_list.insert(END, "\N{slightly smiling face}")
+                    emoji_list.insert(END, "\N{winking face}")
+                    emoji_list.insert(END, "\N{smiling face with sunglasses}")
+                    emoji_list.insert(END, "\N{face with tears of joy}")
+                    emoji_list.insert(END, "\N{upside-down face}")
+
+                    def handle_emoji(e):
+                        top_chat_box.insert(END, emoji_list.get(emoji_list.curselection()))
+                    emoji_list.bind('<Double-Button>', handle_emoji)
+
+                top_send_file_btn = Button(top_main_chat_box, text="Send File", command=send_file)
+                top_send_file_btn.place(x=270, y=440, width=60, height=20)
+                top_send_emoji_btn = Button(top_main_chat_box, text="Send Emoji", command=send_emoji)
+                top_send_emoji_btn.place(x=270, y=465, width=60, height=20)
 
                 top_chat_box = Entry(top_main_chat_box)
                 top_chat_box["borderwidth"] = "1px"
@@ -597,9 +617,6 @@ def main_chat_box():
     main_body.place(x=130, y=40)
 
     main_body_text.insert(END, "Welcome to \n\n")
-    # main_body_text.insert(END, "Username: {}\n".format(account_info['username']))
-    # main_body_text.insert(END, "Age: {}\n".format(account_info['age']))
-    # main_body_text.insert(END, "Location: {}\n".format(account_info['location']))
     main_body_text.insert(END, " #####  #     #    #    #######       #    ######  ######  \n")
     main_body_text.insert(END, "#     # #     #   # #      #         # #   #     # #     #\n")
     main_body_text.insert(END, "#       #     #  #   #     #        #   #  #     # #     #\n")
