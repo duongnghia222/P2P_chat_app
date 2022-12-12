@@ -12,7 +12,7 @@ from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 FORMAT = 'utf-8'
 SEPARATOR = "<SEPARATOR>"
-BUFFER_SIZE = 4096 # send 4096 bytes each time step
+BUFFER_SIZE = 4096  # send 4096 bytes each time step
 
 # =================
 root = None
@@ -23,7 +23,7 @@ server_listen = None
 server = socket.gethostbyname(socket.gethostname())  # ip of the server
 port = 2222
 # =========
-server_server = socket.gethostbyname(socket.gethostname())   # ip of the server of the app to receive response (user gethostbyname)
+server_server = socket.gethostbyname(socket.gethostname())  # ip of the server of the app to receive response
 port_server = 2223
 # port_for_response = 2223
 # ==================
@@ -35,7 +35,8 @@ friend_list = []
 top_frame_list = []
 msg_db_list = []
 
-def listen(client_listen, address_listen):
+
+def listen(client_listen):
     while True:
         try:
             response = client_listen.recv(4000)
@@ -45,11 +46,11 @@ def listen(client_listen, address_listen):
                 from_user_address = response[response.index('_ip=') + 4:response.index('_port=')]
                 from_user_port = response[response.index('_port=') + 6:-1]
                 friend_requests.append(from_user)
-                friend_requests_detail.append({'username':from_user, 'ip':from_user_address,'port':from_user_port})
+                friend_requests_detail.append({'username': from_user, 'ip': from_user_address, 'port': from_user_port})
             elif response[:21] == '-accept_request_from_':
                 from_user = response[21:response.index('_ip=')]
-                from_user_address = response[response.index('_ip=')+4:response.index('_port=')]
-                from_user_port = response[response.index('_port=')+6:-1]
+                from_user_address = response[response.index('_ip=') + 4:response.index('_port=')]
+                from_user_port = response[response.index('_port=') + 6:-1]
                 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 conn.connect((from_user_address, int(from_user_port)))
                 friend_list.append({'username': from_user, 'conn': conn})
@@ -79,7 +80,7 @@ def listen(client_listen, address_listen):
 
                 print(response)
                 from_who = response[:response.index(':')]
-                msg = response[response.index(':')+2:]
+                msg = response[response.index(':') + 2:]
                 for top in top_frame_list:
                     if from_who == top['username']:
                         if top['top'] is not None:
@@ -92,10 +93,10 @@ def listen(client_listen, address_listen):
                         msg_db['message'].append(msg)
                         found = True
                 if not found:
-                    msg_db_list.append({'username':from_who, 'message':[msg]})
+                    msg_db_list.append({'username': from_who, 'message': [msg]})
         except:
-            # print('disconnect with', address_listen)
             client_listen.close()
+
 
 def connect_user(user, top):
     client.send("-friend_request_to_{}_from_{}-".format(user, account_info['username']).encode())
@@ -151,10 +152,12 @@ def accept_request(user, top):
     top.destroy()
     pass
 
+
 def delete_request(user, top):
     block_list.append(user)
     top.destroy()
     pass
+
 
 def show_friend_requests():
     top = Toplevel(root2)
@@ -166,12 +169,12 @@ def show_friend_requests():
     scrollbar.pack(side=RIGHT, fill=Y)
     # buttons = Frame(top)
     accept_btn = Button(top, text="Accept",
-                     command=lambda: accept_request(
-                         listbox.get(ACTIVE), top))
+                        command=lambda: accept_request(
+                            listbox.get(ACTIVE), top))
     accept_btn.pack(side=BOTTOM)
     delete_btn = Button(top, text="Delete",
-                       command=lambda: delete_request(
-                           listbox.get(ACTIVE), top))
+                        command=lambda: delete_request(
+                            listbox.get(ACTIVE), top))
     delete_btn.pack(side=BOTTOM)
 
     for index, username in enumerate(friend_requests):
@@ -189,10 +192,10 @@ def show_active_user():
 
 
 def connect_to_server(name, age, location, password, confirm_password, top):
-    if (not age.isnumeric()):
+    if not age.isnumeric():
         messagebox.showerror("Age", "Age must be a number !!!")
         return
-    if (password != confirm_password):
+    if password != confirm_password:
         messagebox.showerror("Password", "Password not match !!!")
         return
     global client
@@ -258,9 +261,9 @@ def connect_to_server_window():
     btn.grid(row=5, column=1)
 
 
-def login(usename, password, top):
+def login(username, password, top):
     login_info = dict()
-    login_info['username'] = usename
+    login_info['username'] = username
     login_info['password'] = password
     global client
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -322,8 +325,6 @@ def save_history():
     messagebox.showerror('Info', 'Can not find user')
 
 
-
-
 def change_info(name, age, top):
     account_info['username'] = name
     account_info['age'] = age
@@ -349,11 +350,11 @@ def change_info_window():
     btn.grid(row=2, column=1)
 
 
-def run_listen(server_listen):
+def run_listen():
     while True:
         try:
             client_listen, address_listen = server_listen.accept()
-            t = threading.Thread(target=listen, args=(client_listen, address_listen))
+            t = threading.Thread(target=listen, args=client_listen)
             t.start()
         except:
             server_listen.close()
@@ -377,7 +378,6 @@ def main_chat_box():
     root2.geometry(alignstr)
     root2.resizable(width=False, height=False)
     root2.title("Chat APP v1")
-
 
     menu_bar = Menu(root2, tearoff=0)
 
@@ -405,7 +405,6 @@ def main_chat_box():
     welcome_title["text"] = "Welcome to chat app v1 {}".format(account_info['username'])
     welcome_title.place(x=160, y=0, width=330, height=30)
 
-
     #  =====================================
     friend_frame = Listbox(root2)
     friend_frame["borderwidth"] = "1px"
@@ -417,6 +416,7 @@ def main_chat_box():
     friend_frame.place(x=40, y=40, width=80, height=100)
 
     added_list = []
+
     def friend_frame_update():
         for friend in friend_list:
             if friend['username'] not in added_list:
@@ -425,6 +425,7 @@ def main_chat_box():
         friend_frame.after(1000, friend_frame_update)
 
     friend_frame_update()
+
     def start_chat_with_a_user(is_open):
         for top_frame in top_frame_list:
             if friend_frame.get(ACTIVE) == top_frame['username']:
@@ -435,10 +436,10 @@ def main_chat_box():
                 top_height = 500
                 top_screenwidth = top_main_chat_box.winfo_screenwidth()
                 top_screenheight = top_main_chat_box.winfo_screenheight()
-                top_alignstr = '%dx%d+%d+%d' % (top_width, top_height, (top_screenwidth - top_width) / 2, (top_screenheight - top_height) / 2)
+                top_alignstr = '%dx%d+%d+%d' % (
+                    top_width, top_height, (top_screenwidth - top_width) / 2, (top_screenheight - top_height) / 2)
                 top_main_chat_box.geometry(top_alignstr)
                 top_main_chat_box.resizable(width=False, height=False)
-
 
                 top_frame['top'] = Text(top_main_chat_box)
                 chat_body_text_scroll = Scrollbar(top_main_chat_box)
@@ -464,14 +465,14 @@ def main_chat_box():
                     for friend in friend_list:
                         if friend_frame.get(ACTIVE) == friend['username']:
                             conn = friend['conn']
-                            conn.send(('-send_file-{}{}{}'.format(filename, SEPARATOR, account_info['username'])).encode())
+                            conn.send(
+                                ('-send_file-{}{}{}'.format(filename, SEPARATOR, account_info['username'])).encode())
                             time.sleep(0.1)
                             with open(file, "rb") as f:
                                 while True:
                                     bytes_read = f.read(BUFFER_SIZE)
                                     print(bytes_read)
                                     if not bytes_read:
-
                                         break
                                     conn.send(bytes_read)
                                 time.sleep(0.1)
@@ -479,21 +480,15 @@ def main_chat_box():
                             print("file sent")
                             top_frame['top'].insert(END, "file sent. Size: {} \n".format(file_size))
 
-
-
                     # print(file_size)
                     # print(filename)
-
-
 
                 top_send_file_btn = Button(top_main_chat_box, text="      Send File", command=send_file)
                 top_send_file_btn.place(x=240, y=450, width=70, height=30)
 
-
                 top_chat_box = Entry(top_main_chat_box)
                 top_chat_box["borderwidth"] = "1px"
-                ft = tkFont.Font(family='Times', size=10)
-                top_chat_box["font"] = ft
+                top_chat_box["font"] = tkFont.Font(family='Times', size=10)
                 top_chat_box["fg"] = "black"
                 top_chat_box.place(x=10, y=450, width=248, height=31)
 
@@ -507,41 +502,40 @@ def main_chat_box():
                                 friend['conn'].send(text.encode())
                             except:
                                 print('can not send message')
-                            top_frame['top'].insert(END, 'You: '+ top_chat_box.get() +'\n')
-
+                            top_frame['top'].insert(END, 'You: ' + top_chat_box.get() + '\n')
 
                     top_chat_box.delete(0, END)
-                top_chat_box.bind("<Return>", send_text)
 
+                top_chat_box.bind("<Return>", send_text)
 
     def foo(e):
         start_chat_with_a_user(False)
+
     friend_frame.bind('<Double-Button>', foo)
 
     # ===========================
-    imcome_mess_frame = Listbox(root2)
-    imcome_mess_frame["borderwidth"] = "1px"
+    income_mess_frame = Listbox(root2)
+    income_mess_frame["borderwidth"] = "1px"
     ft = tkFont.Font(family='Times', size=10)
-    imcome_mess_frame["font"] = ft
-    imcome_mess_frame["fg"] = "yellow"
-    imcome_mess_frame["bg"] = "grey"
-    imcome_mess_frame.place(x=40, y=150, width=80, height=268)
+    income_mess_frame["font"] = ft
+    income_mess_frame["fg"] = "yellow"
+    income_mess_frame["bg"] = "grey"
+    income_mess_frame.place(x=40, y=150, width=80, height=268)
 
     def open_conversation_with_user(*args):
         start_chat_with_a_user(True)
 
+    income_mess_frame_added_list = []
 
-
-
-    imcome_mess_frame_added_list = []
-    def imcome_mess_frame_update():
+    def income_mess_frame_update():
         for msg_db in msg_db_list:
-            if msg_db['username'] not in imcome_mess_frame_added_list:
-                imcome_mess_frame.insert(END, msg_db['username'] + ':' +msg_db['message'][-1])
-                imcome_mess_frame_added_list.append(msg_db['username'])
-        imcome_mess_frame.after(1000, imcome_mess_frame_update)
-    imcome_mess_frame_update()
-    imcome_mess_frame.bind('<Double-Button>', open_conversation_with_user)
+            if msg_db['username'] not in income_mess_frame_added_list:
+                income_mess_frame.insert(END, msg_db['username'] + ':' + msg_db['message'][-1])
+                income_mess_frame_added_list.append(msg_db['username'])
+        income_mess_frame.after(1000, income_mess_frame_update)
+
+    income_mess_frame_update()
+    income_mess_frame.bind('<Double-Button>', open_conversation_with_user)
     # =================================
 
     main_body = Frame(root2, height=377, width=447)
@@ -567,14 +561,9 @@ def main_chat_box():
     main_body_text.insert(END, "#     # #     # #     #    #       #     # #       #\n")
     main_body_text.insert(END, " #####  #     # #     #    #       #     # #       #       \n")
 
-
-
-
-
     main_body_text.config(state=DISABLED)
 
     # ==========================================
-
 
     text_input = Entry(root2)
     text_input["borderwidth"] = "1px"
@@ -644,22 +633,21 @@ def main():
     login_btn.place(x=70, y=240, width=70, height=25)
     login_btn["command"] = login_window
 
-    GLabel_60 = Label(root)
+    login_label = Label(root)
     ft = tkFont.Font(family='Times', size=10)
-    GLabel_60["font"] = ft
-    GLabel_60["fg"] = "black"
-    GLabel_60["justify"] = "center"
-    GLabel_60["text"] = "CHAT APP"
-    GLabel_60.place(x=70, y=80, width=70, height=25)
+    login_label["font"] = ft
+    login_label["fg"] = "black"
+    login_label["justify"] = "center"
+    login_label["text"] = "CHAT APP"
+    login_label.place(x=70, y=80, width=70, height=25)
 
-    GLabel_271 = Label(root)
+    login_footer = Label(root)
     ft = tkFont.Font(family='Times', size=6)
-    GLabel_271["font"] = ft
-    GLabel_271["fg"] = "#c8c3bc"
-    GLabel_271["justify"] = "center"
-    GLabel_271["text"] = "2022"
-    GLabel_271.place(x=50, y=350, width=99, height=30)
-
+    login_footer["font"] = ft
+    login_footer["fg"] = "#c8c3bc"
+    login_footer["justify"] = "center"
+    login_footer["text"] = "2022"
+    login_footer.place(x=50, y=350, width=99, height=30)
 
     root.mainloop()
 

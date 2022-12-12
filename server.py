@@ -1,7 +1,7 @@
-from tkinter import *
 import threading
 import socket
 import pickle
+
 FORMAT = 'utf-8'
 
 active_users = []
@@ -13,10 +13,11 @@ port = 2222
 # client_port = 2223
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host, port))
+
+
 def start_server():
     print("Sever is listening on", host)
     server.listen()
-
 
 
 def tcp(client, address):
@@ -52,8 +53,8 @@ def tcp(client, address):
                 username_list_info = pickle.dumps(user_name_list)
                 client.send(username_list_info)
             elif command[:19] == '-friend_request_to_':
-                to_username = command[19:command.find('from')-1]
-                from_user = command[command.find('from')+5:-1]
+                to_username = command[19:command.find('from') - 1]
+                from_user = command[command.find('from') + 5:-1]
                 # search for conn
                 from_user_ip = ''
                 from_user_port = ''
@@ -69,11 +70,12 @@ def tcp(client, address):
                         to_user = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         to_user.connect((address_send, port_send))
                         to_user.send(('-friend_request_from_{}_ip={}_port={}-'.format(from_user,
-                                        from_user_ip, from_user_port)).encode())
+                                                                                      from_user_ip,
+                                                                                      from_user_port)).encode())
                         to_user.close()
 
             elif command[:21] == '-accept_request_from_':
-                to_username = command[command.index('_to_')+4:-1]
+                to_username = command[command.index('_to_') + 4:-1]
                 from_user = command[21:command.index('_to_')]
                 from_user_address, from_user_port = ['', '']
                 for user in active_users:
@@ -87,7 +89,8 @@ def tcp(client, address):
                         to_user = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         to_user.connect((address_send, int(port_send)))
                         to_user.send(('-accept_request_from_{}_ip={}_port={}-'.format(from_user,
-                                                                                      from_user_address, from_user_port)).encode())
+                                                                                      from_user_address,
+                                                                                      from_user_port)).encode())
                         to_user.close()
         except:
             # print('disconnect with ', address)
@@ -102,9 +105,6 @@ def receive_connection():
             t.start()
         except:
             client.close()
-
-
-
 
 
 if __name__ == "__main__":
