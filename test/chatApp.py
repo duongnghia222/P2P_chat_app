@@ -57,18 +57,22 @@ def listen(client_listen, address_listen):
                 filename, file_from_user = response[11:].split(SEPARATOR)
                 filename = os.path.basename(filename)
                 print(filename)
-
-                # filesize = int(filesize)
+                bytes_read = client_listen.recv(BUFFER_SIZE)
+                print(bytes_read)
                 with open(filename, "wb") as f:
+                    print("file opened")
                     while True:
+                        f.write(bytes_read)
                         # read 1024 bytes from the socket (receive)
                         bytes_read = client_listen.recv(BUFFER_SIZE)
-                        if not bytes_read:
+                        if not bytes_read or bytes_read == '-EOF-'.encode():
                             break
-                        f.write(bytes_read)
-                    for top in top_frame_list:
-                        if file_from_user == top['username']:
-                            top['top'].insert(END, "Received file from {}".format(file_from_user))
+                print('received file')
+                print(file_from_user)
+                print(top_frame_list)
+                for top in top_frame_list:
+                    if file_from_user == top['username']:
+                        top['top'].insert(END, "Received file from {} \n".format(file_from_user))
             elif response != '':
 
                 print(response)
@@ -459,14 +463,18 @@ def main_chat_box():
                     for friend in friend_list:
                         if friend_frame.get(ACTIVE) == friend['username']:
                             conn = friend['conn']
-                            conn.send(('-send_file-{}{}{}'.format(filename, SEPARATOR, friend['username'])).encode())
+                            conn.send(('-send_file-{}{}{}'.format(filename, SEPARATOR, account_info['username'])).encode())
                             time.sleep(0.1)
                             with open(file, "rb") as f:
                                 while True:
                                     bytes_read = f.read(BUFFER_SIZE)
+                                    print(bytes_read)
                                     if not bytes_read:
+
                                         break
-                                    conn.sendall(bytes_read)
+                                    conn.send(bytes_read)
+                                time.sleep(0.1)
+                                conn.send('-EOF-'.encode())
                             print("file sent")
                             top_frame['top'].insert(END, "file sent. Size: {} \n".format(file_size))
 
