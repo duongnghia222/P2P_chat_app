@@ -1,10 +1,13 @@
 import socket
 import threading
 import sys
+from cryptography.fernet import Fernet
+key = b'PTdTxhA2j06W6nLSy6_CIs7CJ5yQ05u7bC8gYdZFZAg='
+cipher_suite = Fernet(key)
 
 nickname = input("Choose a nickname:\n")
-SERVER = "27.78.36.167"
-port = 2224
+SERVER = socket.gethostbyname(socket.gethostname())
+port = 5555
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 client.connect((SERVER, port))
@@ -14,9 +17,9 @@ print(client)
 def receive():
     while True:
         try:
-            message = client.recv(1024).decode('ascii')
+            message = client.recv(1024).decode()
             if message == 'NICK':
-                client.send(nickname.encode('ascii'))
+                client.send(nickname.encode())
             else:
                 print(message)
         except:
@@ -27,8 +30,9 @@ def receive():
 
 def write():
     while True:
-        message = '{}: {}'.format(nickname, input(''))
-        client.send((str(message)).encode('ascii'))
+        message = '{}: {}'.format(nickname, (input('')))
+
+        client.send(cipher_suite.encrypt(message.encode()))
         if message == '{}: exit'.format(nickname):
            sys.exit()
 

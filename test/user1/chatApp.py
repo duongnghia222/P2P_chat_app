@@ -338,7 +338,7 @@ def save_history():
                 title="Choose save location",
                 filetypes=[('Plain text', '*.txt'), ('Any File', '*.*')])
             try:
-                filehandle = open(file_name + ".txt", "w")
+                filehandle = open(file_name + ".txt", "w", encoding="utf-8")
             except IOError:
                 print("Can't save history.")
                 return

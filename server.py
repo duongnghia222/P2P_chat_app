@@ -1,6 +1,9 @@
 import threading
 import socket
 import pickle
+from cryptography.fernet import Fernet
+key = b'PTdTxhA2j06W6nLSy6_CIs7CJ5yQ05u7bC8gYdZFZAg='
+cipher_suite = Fernet(key)
 
 FORMAT = 'utf-8'
 
@@ -29,7 +32,8 @@ def tcp(client, address):
                 # receive client info
                 dump_client_info = client.recv(4096)  # receive at most 4096 bytes
                 client_info = pickle.loads(dump_client_info)
-
+                e_password = cipher_suite.decrypt(client_info['password']).decode()
+                client_info['password'] = e_password
                 print("1st time connected with", address)
 
                 active_users.append(client_info)

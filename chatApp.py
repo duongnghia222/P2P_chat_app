@@ -9,7 +9,10 @@ import time
 import os
 from tkinter.simpledialog import askstring
 from tkinter.filedialog import asksaveasfilename, askopenfilename
+from cryptography.fernet import Fernet
 
+key = b'PTdTxhA2j06W6nLSy6_CIs7CJ5yQ05u7bC8gYdZFZAg='
+cipher_suite = Fernet(key)
 FORMAT = 'utf-8'
 SEPARATOR = "<SEPARATOR>"
 BUFFER_SIZE = 4096  # send 4096 bytes each time step
@@ -241,7 +244,7 @@ def connect_to_server(name, age, location, password, confirm_password, top):
     account_info['username'] = name
     account_info['age'] = age
     account_info['location'] = location
-    account_info['password'] = password
+    account_info['password'] = cipher_suite.encrypt(password.encode())
     dump_client_info = pickle.dumps(account_info)
     client.send('-sign_up-'.encode())
     time.sleep(0.1)
@@ -338,7 +341,7 @@ def save_history():
                 title="Choose save location",
                 filetypes=[('Plain text', '*.txt'), ('Any File', '*.*')])
             try:
-                filehandle = open(file_name + ".txt", "w")
+                filehandle = open(file_name + ".txt", "w", encoding="utf-8")
             except IOError:
                 print("Can't save history.")
                 return
