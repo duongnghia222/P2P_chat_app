@@ -6,9 +6,9 @@ key = b'PTdTxhA2j06W6nLSy6_CIs7CJ5yQ05u7bC8gYdZFZAg='
 cipher_suite = Fernet(key)
 
 nickname = input("Choose a nickname:\n")
-SERVER = socket.gethostbyname(socket.gethostname())
+SERVER = "192.168.132.51"
 port = 5555
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 
 client.connect((SERVER, port))
 print(client)

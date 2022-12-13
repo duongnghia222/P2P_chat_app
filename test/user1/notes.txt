@@ -1,2 +1,0 @@
-in chatApp: connect -> ask for personal info -> save to server
-active_user: dict{id, name, age, location, hobby(optional)}

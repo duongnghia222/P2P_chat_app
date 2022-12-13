@@ -97,18 +97,23 @@
 # print(command[:20])
 # print(command[20:])
 
-print("\N{grinning face}")
-from cryptography.fernet import Fernet
-key = Fernet.generate_key() #this is your "password"
-print(key)
-cipher_suite = Fernet(key)
-encoded_text = cipher_suite.encrypt("Hello stackoverflow!".encode())
-text = 'hell'.encode()
-print(type(text))
-print(type(encoded_text))
-decoded_text = cipher_suite.decrypt(encoded_text)
-print(decoded_text)
-print(type(decoded_text))
-f = decoded_text.decode('utf-8')
-print(f)
-print(type(f))
+# print("\N{grinning face}")
+# from cryptography.fernet import Fernet
+# key = Fernet.generate_key() #this is your "password"
+# print(key)
+# cipher_suite = Fernet(key)
+# encoded_text = cipher_suite.encrypt("Hello stackoverflow!".encode())
+# text = 'hell'.encode()
+# print(type(text))
+# print(type(encoded_text))
+# decoded_text = cipher_suite.decrypt(encoded_text)
+# print(decoded_text)
+# print(type(decoded_text))
+# f = decoded_text.decode('utf-8')
+# print(f)
+# print(type(f))
+from pysondb import db
+my_db = db.getDb("db.json")
+my_db.add({"name":"pysondb","type":"DB"})
+db.get()
+

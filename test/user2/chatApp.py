@@ -7,9 +7,14 @@ import socket
 import pickle
 import time
 import os
+import json
+import io
 from tkinter.simpledialog import askstring
 from tkinter.filedialog import asksaveasfilename, askopenfilename
+from cryptography.fernet import Fernet
 
+key = b'PTdTxhA2j06W6nLSy6_CIs7CJ5yQ05u7bC8gYdZFZAg='
+cipher_suite = Fernet(key)
 FORMAT = 'utf-8'
 SEPARATOR = "<SEPARATOR>"
 BUFFER_SIZE = 4096  # send 4096 bytes each time step
@@ -24,7 +29,7 @@ server = socket.gethostbyname(socket.gethostname())  # ip of the server
 port = 2222
 # =========
 server_server = socket.gethostbyname(socket.gethostname())  # ip of the server of the app to receive response
-port_server = 2225
+port_server = 5
 # port_for_response = 2223
 # ==================
 friend_requests = []
@@ -34,6 +39,7 @@ account_info = dict()
 friend_list = []
 top_frame_list = []
 msg_db_list = []
+friend_ip_port_list = []
 
 
 def listen(client_listen, address):
@@ -54,6 +60,7 @@ def listen(client_listen, address):
                 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 conn.connect((from_user_address, int(from_user_port)))
                 friend_list.append({'username': from_user, 'conn': conn})
+                friend_ip_port_list.append({'username': from_user, 'ip': from_user_address, 'port': int(from_user_port)})
                 top_frame_list.append({'username': from_user, 'top': None})
                 # conn.send('hi {}'.format(from_user).encode())
             elif response[:11] == '-send_file-':
@@ -105,7 +112,6 @@ def block_user(user, top):
     pass
 
 
-
 def show_active_users_window(active_users):
     top = Toplevel(root2)
     top.title("Active Users")
@@ -143,6 +149,7 @@ def show_active_users_window(active_users):
         age_label.pack()
         location_label = Label(top_top, text='LOCATION: {}'.format(client_info['location']))
         location_label.pack()
+
     listbox.bind('<Double-Button>', show_infor)
     listbox.pack(side=LEFT, fill=BOTH, expand=1)
 
@@ -157,6 +164,8 @@ def accept_request(user, top):
             for d in friend_requests_detail:
                 if user == d['username']:
                     friend['conn'].connect((d['ip'], int(d['port'])))
+                    friend_ip_port_list.append({'username': user, 'ip': d['ip'], 'port': int(d['port'])})
+
 
     top_frame_list.append({'username': user, 'top': None})
     top.destroy()
@@ -206,6 +215,7 @@ def show_friend_requests():
         age_label.pack()
         location_label = Label(top_top, text='LOCATION: {}'.format(client_info['location']))
         location_label.pack()
+
     listbox.bind('<Double-Button>', show_infor)
     listbox.pack(side=LEFT, fill=BOTH, expand=1)
 
@@ -241,12 +251,14 @@ def connect_to_server(name, age, location, password, confirm_password, top):
     account_info['username'] = name
     account_info['age'] = age
     account_info['location'] = location
-    account_info['password'] = password
+    account_info['password'] = cipher_suite.encrypt(password.encode())
     dump_client_info = pickle.dumps(account_info)
     client.send('-sign_up-'.encode())
     time.sleep(0.1)
     client.send(dump_client_info)
     messagebox.showinfo("Sign Up", "Sign Up Successfully")
+    # change password back to string
+    account_info['password'] = cipher_suite.decrypt(account_info['password']).decode()
     top.destroy()
     root.destroy()
     main_chat_box()
@@ -306,6 +318,17 @@ def login(username, password, top):
         messagebox.showerror("Login", "Username or Password not match")
     top.destroy()
     root.destroy()
+    with open('db.json') as data_file:
+        data_loaded = json.load(data_file)
+    global friend_ip_port_list, friend_requests_detail, block_list, account_info, friend_list
+    print(data_loaded)
+    print(type(data_loaded))
+    friend_requests_detail = data_loaded['friend_requests_detail']
+    friend_ip_port_list = data_loaded['friend_ip_port_list']
+    block_list = data_loaded['block_list']
+    account_info = data_loaded['account_info']
+    for f in friend_ip_port_list:
+        friend_list.append({'username': f['username'], 'conn': None})
     main_chat_box()
 
 
@@ -338,7 +361,7 @@ def save_history():
                 title="Choose save location",
                 filetypes=[('Plain text', '*.txt'), ('Any File', '*.*')])
             try:
-                filehandle = open(file_name + ".txt", "w")
+                filehandle = open(file_name + ".txt", "w", encoding="utf-8")
             except IOError:
                 print("Can't save history.")
                 return
@@ -428,7 +451,7 @@ def main_chat_box():
     tool_menu = Menu(menu_bar, tearoff=0)
     tool_menu.add_command(label="Save chat", command=save_history)
     tool_menu.add_command(label="Change my information",
-                          command= lambda: change_info_window(age_label, location_label))
+                          command=lambda: change_info_window(age_label, location_label))
     tool_menu.add_separator()  # <hr> to separate exit option
     tool_menu.add_command(label="Exit", command=exit_app)
     menu_bar.add_cascade(label="Tool", menu=tool_menu)
@@ -482,7 +505,7 @@ def main_chat_box():
                 top_main_chat_box = Toplevel(root2)
                 top_main_chat_box.title("Conversation with {}".format(which_user))
                 # top_frame['top'].grab_set()
-                top_width = 320
+                top_width = 350
                 top_height = 500
                 top_screenwidth = top_main_chat_box.winfo_screenwidth()
                 top_screenheight = top_main_chat_box.winfo_screenheight()
@@ -508,6 +531,7 @@ def main_chat_box():
                 else:
                     top_frame['top'].insert(END, "You are chatting with {} \n".format(which_user))
                 top_frame['top'].config(state="disabled")
+
                 def send_file():
                     file = askopenfilename(title="Choose a file", initialdir=os.path.dirname(__file__))
                     filename = str(file.split('/')[-1])
@@ -530,8 +554,28 @@ def main_chat_box():
                             top_frame['top'].insert(END, "file sent. Size: {} \n".format(file_size))
                             top_frame['top'].config(state="disabled")
 
-                top_send_file_btn = Button(top_main_chat_box, text="      Send File", command=send_file)
-                top_send_file_btn.place(x=240, y=450, width=70, height=30)
+                def send_emoji():
+                    emoji_frame = Toplevel(top_main_chat_box, height=100, width=50)
+                    emoji_frame.title("Emoji")
+                    emoji_list = Listbox(emoji_frame)
+                    emoji_list.pack()
+                    emoji_list.insert(END, "\N{grinning face}")
+                    emoji_list.insert(END, "\N{grinning face with smiling eyes}")
+                    emoji_list.insert(END, "\N{slightly smiling face}")
+                    emoji_list.insert(END, "\N{winking face}")
+                    emoji_list.insert(END, "\N{smiling face with sunglasses}")
+                    emoji_list.insert(END, "\N{face with tears of joy}")
+                    emoji_list.insert(END, "\N{upside-down face}")
+
+                    def handle_emoji(e):
+                        top_chat_box.insert(END, emoji_list.get(emoji_list.curselection()))
+
+                    emoji_list.bind('<Double-Button>', handle_emoji)
+
+                top_send_file_btn = Button(top_main_chat_box, text="Send File", command=send_file)
+                top_send_file_btn.place(x=270, y=440, width=60, height=20)
+                top_send_emoji_btn = Button(top_main_chat_box, text="Send Emoji", command=send_emoji)
+                top_send_emoji_btn.place(x=270, y=465, width=60, height=20)
 
                 top_chat_box = Entry(top_main_chat_box)
                 top_chat_box["borderwidth"] = "1px"
@@ -597,9 +641,6 @@ def main_chat_box():
     main_body.place(x=130, y=40)
 
     main_body_text.insert(END, "Welcome to \n\n")
-    # main_body_text.insert(END, "Username: {}\n".format(account_info['username']))
-    # main_body_text.insert(END, "Age: {}\n".format(account_info['age']))
-    # main_body_text.insert(END, "Location: {}\n".format(account_info['location']))
     main_body_text.insert(END, " #####  #     #    #    #######       #    ######  ######  \n")
     main_body_text.insert(END, "#     # #     #   # #      #         # #   #     # #     #\n")
     main_body_text.insert(END, "#       #     #  #   #     #        #   #  #     # #     #\n")
@@ -647,11 +688,23 @@ def main_chat_box():
 
 
 def exit_app():
+    data = dict()
+    data['friend_requests_detail'] = friend_requests_detail
+    data['friend_ip_port_list'] = friend_ip_port_list
+    data['block_list'] = block_list
+    data['account_info'] = account_info
+    with io.open('db.json', 'w', encoding='utf8') as outfile:
+        str_ = json.dumps(data,
+                          indent=4, sort_keys=True,
+                          separators=(',', ': '), ensure_ascii=False)
+        outfile.write(str_)
+
     for friend in friend_list:
         friend['conn'].close()
     server_listen.close()
     client.close()
     root2.destroy()
+
     sys.exit()
 
 

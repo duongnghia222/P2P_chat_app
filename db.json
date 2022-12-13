@@ -1,0 +1,25 @@
+{
+    "account_info": {
+        "address": "172.31.144.1",
+        "age": "1",
+        "location": "1",
+        "password": "1",
+        "port": 2223,
+        "username": "1"
+    },
+    "block_list": [],
+    "friend_ip_port_list": [
+        {
+            "ip": "172.31.144.1",
+            "port": 2224,
+            "username": "user2"
+        }
+    ],
+    "friend_requests_detail": [
+        {
+            "ip": "172.31.144.1",
+            "port": "2224",
+            "username": "user2"
+        }
+    ]
+}
